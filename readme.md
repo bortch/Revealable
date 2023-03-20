@@ -30,9 +30,28 @@ But on the other hand, can we really blame him for wanting to make a living from
 
 ## The scheme overview
 
-### Preparation & contract creation
+### Uses cases
 
 ![Contract Creation](docs/contract_creation.png)
+
+- The owner must prepare his secret and cipher it using a key and a nonce.
+- The owner must write down the ciphered secret to the smart contract before deployment.
+- The owner must test his smart contract to make sure everything works as expected.
+- The owner must deploy the smart contract.
+
+![Contract Interaction](docs/contract_interaction.png)
+
+- The collector can mint the smart contract.
+- The collector can call the smart contract but get the ciphered secret.
+
+![Reveal Secret](docs/reveal_secret.png)
+
+- The owner can reveal the secret by calling a specific function that will write the key into the smart contract.
+- The collector can call the smart contract and get the revealed secret.
+
+### Preparation & contract creation
+
+![Contract Creation](docs/Contract_creation_SeqDiag.png)
 
 - The owner generates a key and a nonce.
 - The owner prepares his secret and cipher it using the key and the nonce.
@@ -40,15 +59,13 @@ But on the other hand, can we really blame him for wanting to make a living from
 - The owner tests his smart contract to make sure everything works as expected.
 - The owner deploys the smart contract.
 
-### Contract usage before reveal
-
-![Contract Interaction](docs/contract_interaction.png)
-
-- Anyone can call the smart contract but get ciphered secret.
-
 ### Reveal
 
-![Reveal Secret](docs/reveal_secret.png)
+![Contract interaction](docs/Contract_interaction_SeqDiag.png)
+
+#### Contract usage before reveal
+
+- Anyone can call the smart contract but get ciphered secret.
 
 #### Reveal: option 1
 

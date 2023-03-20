@@ -1,0 +1,29 @@
+@startuml
+!theme amiga
+'autonumber
+actor       Owner                       as o
+actor       Collector                   as c
+entity      "Contract\n<<deployed>>"    as contract
+entity      "Blockchain\n<<EVM>>"         as net
+
+== Contract interaction ==
+c -> contract : call mint()
+activate contract
+contract ->o net : write transaction\n(address, tokenID)
+deactivate contract
+c -> contract : call tokenURI(tokenID)
+activate contract
+contract --> c : return ciphered metadata
+deactivate contract
+
+== Secret revelation ==
+o -> contract : call setReveal(key,nonce)
+activate contract
+contract ->o net : update private\nfields _key & _nonce
+deactivate contract
+c -> contract : call tokenURI(tokenID)
+activate contract
+contract --> c : return decrypted metadata
+deactivate contract
+
+@enduml

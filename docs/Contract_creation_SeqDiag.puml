@@ -1,0 +1,24 @@
+@startuml
+!theme amiga
+'autonumber
+actor       Owner           as o
+control     "Cipher\n<<script>>"   as cipher
+entity      "Contract\n<<undeployed>>"       as contract
+entity      "Network\n<<blockchain>>"         as net
+
+== Contract creation ==
+o -> o : generate\nkey & nonce
+o -> cipher : encrypt(key, nonce, the_message)
+activate cipher
+cipher --> o : encrypted_message
+deactivate cipher
+o ->o contract : write encrypted_message\nin the contract
+o ->o contract : test contract
+
+== Contract deployment ==
+
+o -> net : deploy contract
+activate net
+net --> o : contract address
+deactivate net
+@enduml
