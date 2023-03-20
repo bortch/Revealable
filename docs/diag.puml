@@ -1,0 +1,50 @@
+@startuml
+!theme amiga
+skinparam linetype ortho
+left to right direction
+
+actor Owner as O
+
+rectangle "Contract creation"{
+    (2. Create\nContract) <-[norank]- O
+    O -[norank]-> (1. Cipher\nSecret)
+    O -> (3. Deploy\nContract)
+}
+
+'---------------------------------------------
+newpage
+!theme amiga
+skinparam linetype ortho
+left to right direction
+
+actor "Collector" as C
+
+rectangle "Contract interaction"{
+    C -> (1. Mint Token)
+    C -> (2. Get Token)
+}
+
+C-[hidden]left->"Contract interaction"
+
+note right of (2. Get Token)
+    The collector can get the secret
+    only if he has the token.
+    The token's metadata 
+    are keept secret until
+    the owner reveal it.
+end note
+
+'---------------------------------------------
+newpage
+!theme amiga
+skinparam linetype ortho
+left to right direction
+actor Owner as O
+actor "Collector" as C
+
+rectangle "Reveal"{
+    (2. Get\nRevealed Secret) <-up- C
+    O -down-> (1. Reveal Secret)
+}
+
+@enduml
