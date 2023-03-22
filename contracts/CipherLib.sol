@@ -111,11 +111,39 @@ library CipherLib {
             assembly {
                 dataBlock := mload(add(data, add(i, 32)))
             }
-            bytes32 keyStream = keccak256(abi.encodePacked(key, uint256(iv) + (i / 32)));
+            bytes32 keyStream = keccak256(abi.encode(key, bytes32((uint256(iv) + i)/32)));
             bytes32 cipherBlock = dataBlock ^ keyStream;
             assembly {
                 mstore(add(result, add(i, 32)), cipherBlock)
             }
         }
+        return result;
+    }
+
+    function cipherBytes32CTR(
+        bytes32 data,
+        bytes32 key,
+        bytes32 iv
+    ) public pure returns (bytes32 result) {
+        uint256 length = data.length;
+        
+        assembly {
+            result := mload(0x40)
+            mstore(0x40, add(add(result, length), 32))
+            mstore(result, length)
+        }
+
+        for (uint256 i = 0; i < length; i += 32) {
+            bytes32 dataBlock;
+            assembly {
+                dataBlock := mload(add(data, add(i, 32)))
+            }
+            bytes32 keyStream = keccak256(abi.encode(key, bytes32((uint256(iv) + i)/32)));
+            bytes32 cipherBlock = dataBlock ^ keyStream;
+            assembly {
+                mstore(add(result, add(i, 32)), cipherBlock)
+            }
+        }
+        return result;
     }
 }

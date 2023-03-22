@@ -16,17 +16,11 @@ contract Reveal is ERC721, Ownable {
 
     Counters.Counter private _counter;
     uint16 private _maxSupply = 5;
-    uint256 private _revealKey = 0;
-    uint256 private _nonce = 0;
+    bytes32 private _revealKey = "";
+    bytes32 private _nonce = "";
 
     // array of token ids
-    uint256[] private _hiddenIds = [
-        0x00001,
-        0x00002,
-        0x00003,
-        0x00004,
-        0x00005
-    ];
+    uint16[] private _hiddenIds =  [25293,3784,15829,1612,26299,58420,48545,50278,4370,51563];
 
     // Constructor will be called on contract creation
     constructor() ERC721("Reveal", "REVEAL") {
@@ -36,9 +30,10 @@ contract Reveal is ERC721, Ownable {
     /**
      * @notice Owner can set the key to reveal the token ids
      */
-    function setRevealKey(uint256 revealKey,uint256 nonce) public onlyOwner {
+    function setRevealKey(bytes32 revealKey, bytes32 nonce) public onlyOwner {
         _revealKey = revealKey;
         _nonce = nonce;
+        _isRevealed = true;
     }
 
     /**
@@ -48,8 +43,8 @@ contract Reveal is ERC721, Ownable {
         uint256 tokenId
     ) public view virtual override returns (string memory) {
         _requireMinted(tokenId);
-        // if the token is not revealed, 
-        // it still returns the metadata 
+        // if the token is not revealed,
+        // it still returns the metadata
         // but the tokenId is crypted
         return getMetadata(tokenId);
     }
@@ -58,23 +53,30 @@ contract Reveal is ERC721, Ownable {
      * @notice returns the metadata of the token
      * @param tokenId the token id
      */
-    function getMetadata(uint256 tokenId)
-        public
-        view
-        virtual
-        returns (string memory)
-    {
+    function getMetadata(
+        uint256 tokenId
+    ) public view virtual returns (string memory) {
         _requireMinted(tokenId);
         // build and return the metadata JSON
-       return string.concat(
-            'data:application/json;base64,',
-            Base64.encode(
-                bytes(
-                    string.concat(
-                        '{"name": "Reveal #',reveal(tokenId).toString(),'",',
-                        '"description": "Reveal is a collection of on-chain NFTs"',
-                        // add whatever you want
-                        '}'
+        bytes memory revealed = reveal(tokenId);
+        uint256 tempBytes32;
+
+        assembly {
+            tempBytes32 := mload(add(revealed, 0x20))
+        }
+
+        return
+            string.concat(
+                "data:application/json;base64,",
+                Base64.encode(
+                    bytes(
+                        string.concat(
+                            '{"name": "Reveal #',
+                            tempBytes32.toString(),
+                            '",',
+                            '"description": "Reveal is a collection of on-chain NFTs"',
+                            // add whatever you want
+                            "}"
                         )
                     )
                 )
@@ -87,7 +89,7 @@ contract Reveal is ERC721, Ownable {
      */
     function getTokenId(uint256 n) public view returns (uint256) {
         // string to int
-        return _hiddenIds[n];
+        return uint256(_hiddenIds[n]);
     }
 
     function mint() public {
@@ -100,22 +102,28 @@ contract Reveal is ERC721, Ownable {
         _safeMint(msg.sender, tokenId);
     }
 
-    function reveal(uint256 tokenId) private view returns (uint256) {
-        if(!_isRevealed){
-            return tokenId;
+    function reveal(uint256 tokenId) public view returns (bytes memory) {
+        bytes memory tokenIdBytes = abi.encodePacked(tokenId);
+
+        if (!_isRevealed) {
+            return tokenIdBytes;
         }
-        return uint256(bytes32(cipher_CTR5(abi.encodePacked(tokenId), bytes32(_revealKey), bytes32(_nonce))));
+        return cipher_CTR5(tokenIdBytes, _revealKey, _nonce);
     }
 
-    function cipher_CTR( bytes memory data, bytes memory key) public pure returns (bytes memory result) {
-        return CipherLib.cipherCTR(data, key);
-    }
+    // function cipher_CTR( bytes memory data, bytes memory key) public pure returns (bytes memory result) {
+    //     return CipherLib.cipherCTR(data, key);
+    // }
 
-    function cipher_CTR2( bytes memory data, bytes memory key) public pure returns (bytes memory result) {
-        return CipherLib.cipherCTR2(data, key);
-    }
+    // function cipher_CTR2( bytes memory data, bytes memory key) public pure returns (bytes memory result) {
+    //     return CipherLib.cipherCTR2(data, key);
+    // }
 
-    function cipher_CTR5( bytes memory data, bytes32 key, bytes32 iv) public pure returns (bytes memory result) {
+    function cipher_CTR5(
+        bytes memory data,
+        bytes32 key,
+        bytes32 iv
+    ) public pure returns (bytes memory result) {
         return CipherLib.cipherCTR5(data, key, iv);
     }
 }
