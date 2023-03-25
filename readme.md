@@ -26,7 +26,7 @@ The proposal suggests the following approach:
 
 - The creator defines a variable (like ADN) from which he can deduce the qualities of the associated NFT, but it can just as easily be an incremental number sequence
 - He creates a randomly ordered array of these variables
-- He encrypts this array (or each entries) and encodes it in the contract before deployment
+- He encrypts this array (or each entries) and encodes it in the contract before deployment or sends it to the contract
 
 It can be argued here that the creator knows the position of the NFTs with more valuable qualities and could reserve them for himself to maximise his return on investment.
 With a pseudo-random function (as the blockchain is a deterministic system), it could be made more difficult for the creator to reserve the most valuable NFTs.
@@ -113,7 +113,91 @@ npx hardhat test
 
 ## Example & implementation
 
-TODO
+In our example, the artist randomly defines an order in which the NFTs will be assigned.
+He defines a list of values where each value will refer to an NFT. This can be a serial number, a DNA, an address.
+
+Collectors will mine on a first come, first served basis. The allocation will be done in the order of minting.
+
+Let's take an example of a secret that is an array of 16 bytes.
+
+```typescript
+    uint16[] private _ids;
+```
+
+We started by defining a symmetric encryption function. Here we have taken CTR, but there are other alternatives.
+
+The artist will be able to encrypt his array of values into an array of secret values using the chosen encryption function.
+
+For the example, after performing all the necessary tests, we used *hardhat* and called the locally deployed contract to encrypt the array of values to be hidden.
+
+```typescript
+const cipherMessage = await this.reveal.cipher(data, key, iv);
+```
+
+We then hardcoded the resulting table into the contract.
+
+```typescript
+    uint16[] private _ids = [0x56f2,0x8eaa,0x05f5,0x06a4,0xefeb,0x4568,0xc508,0x9392,0xbd81,0x1cb0];
+```
+
+According to the description of IERC721Metadata, we need a `tokenURI(uint256 tokenId) → string` callable function which returns either a link to a resource or metadata following a certain scheme. Since we are doing OnChain, we will return metadata instead.
+
+```typescript
+function tokenURI(
+        uint256 tokenId
+    ) public view virtual override returns (string memory) {
+        _requireMinted(tokenId);
+        return getMetadata(tokenId);
+    }
+```
+
+There is not necessarily a reason to create a specific function to return the metadata.
+
+We know that in the present *use case*, the tokenId value comes from an array of `uint16`, so it will have to be converted to `uint256` to comply with the signature of the `tokenURI(uint256 tokenId)` function.
+The `tokenId` is received as an `uint256`, but the value or useful information is encoded in 2 bytes, so it will have to be converted again to get the right expected value.
+
+```typescript
+function getMetadata(
+        uint256 tokenId
+    ) public view virtual returns (string memory) {
+        // callable only on minted token
+        _requireMinted(tokenId);
+        // the tokenId to be returned (revealed or not)
+        uint256 displayId = tokenId;
+
+        if(_isRevealed) {
+            bytes memory revealedAsBytes = reveal(tokenId);
+            bytes2 tempBytes2;
+            // crop to bytes2
+            assembly {
+                tempBytes2 := mload(add(revealedAsBytes, 0x20))
+            }
+            // explicit conversion to the original size
+            uint16 tempBytes16 = uint16(tempBytes2);
+            // explicit cast to uint256
+            displayId = uint256(tempBytes16);
+        }
+
+        return
+            string.concat(
+                "data:application/json;base64,",
+                Base64.encode(
+                    bytes(
+                        string.concat(
+                            '{"name": "Reveal #',
+                            displayId.toString(),
+                            '",',
+                            '"description": "Reveal is a collection of on-chain NFTs"',
+                            // add whatever you want
+                            "}"
+                        )
+                    )
+                )
+            );
+    }
+
+```
+
 
 ## Pitfalls
 
