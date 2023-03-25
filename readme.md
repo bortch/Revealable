@@ -1,14 +1,16 @@
 # Revealable On Chain Secret Scheme for NFT
 
-This is a scheme for creating a Secret that could be revealed by the owner of a smart contract.
+This is a scheme to embed a **secret** in a smart contract that could be revealed by the owner of the contract.
 
 ## Motivation
 
 The motivation for this scheme is to gives the owner of a smart contract the ability to hide a secret at deployment time, and reveal it later.
 
-For example, an artist offers a series of OnChain NFTs that vary in rarity.
+## A concret example
 
-The artist does not want the collector to be aware of the differences in the intrinsic qualities of each NFT, so that some will buy the best ones first and others will not want to buy the remaining NFTs.
+An artist offers a series of OnChain NFTs that vary in rarity.
+
+The artist does not want the collector to be aware of the differences in the intrinsic qualities of each NFT so that some people will buy the best ones first and others will not want to buy the remaining NFTs.
 
 Each NFT should have an equal chance of being bought.
 
@@ -16,11 +18,13 @@ In this way, the artist can set a unit price and leave it to chance to determine
 
 ## Randomisation & obfuscation
 
-There are two aspects to this. On the one hand the collector must not know what he is minting, on the other hand the order in which the NFTs are minted must be random.
+If the list of NTFs is published, and even if there is a pseudo-random distribution of tokens, the collector still has the possibility to calculate which NTFs he will mint.
+
+There are two issues to be dealt with here. On the one hand the collector must not know what he is minting, on the other hand the order in which the NFTs are minted must be random.
 
 The proposal suggests the following approach:
 
-- the creator defines a variable (like ADN) from which he can deduce the qualities of the associated NFT.
+- The creator defines a variable (like ADN) from which he can deduce the qualities of the associated NFT, but it can just as easily be an incremental number sequence
 - He creates a randomly ordered array of these variables
 - He encrypts this array (or each entries) and encodes it in the contract before deployment
 
@@ -35,7 +39,7 @@ But on the other hand, can we really blame him for wanting to make a living from
 ![Contract Creation](docs/contract_creation.png)
 
 - The owner must prepare his secret and cipher it using a key and a nonce.
-- The owner must write down the ciphered secret to the smart contract before deployment.
+- The owner must write down the ciphered secret to the smart contract before deployment (this could be done afterwards, but it may be more expensive, it remains to be proven)
 - The owner must test his smart contract to make sure everything works as expected.
 - The owner must deploy the smart contract.
 
