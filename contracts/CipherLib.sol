@@ -1,6 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.19;
 
+
+//import "hardhat/console.sol";
+
 /*
  * @title: CipherLib
  * @dev: Bortch
@@ -92,14 +95,21 @@ library CipherLib {
     * @param key: Key to decrypt data with
     * @param iv: Initialization vector
     * @return: Decrypted data
+    * set to pure
     */
     function cipherCTR5(
         bytes memory data,
         bytes32 key,
         bytes32 iv
-    ) public pure returns (bytes memory result) {
+    ) public view returns (bytes memory result) {
+        // console.log("\n\tcipherCTR5 data:");
+        // console.logBytes(data);
+        // console.log("\tcipherCTR5 key:");
+        // console.logBytes32(key);
+        // console.log("\tcipherCTR5 iv:");
+        // console.logBytes32(iv);
         uint256 length = data.length;
-
+        //console.log("\tcipherCTR5 length: %s", length);
         assembly {
             result := mload(0x40)
             mstore(0x40, add(add(result, length), 32))
@@ -107,16 +117,25 @@ library CipherLib {
         }
 
         for (uint256 i = 0; i < length; i += 32) {
+            //console.log("\t\tcipherCTR5 i: %s", i);
             bytes32 dataBlock;
             assembly {
                 dataBlock := mload(add(data, add(i, 32)))
             }
+            // console.log("\t\tcipherCTR5 dataBlock:");
+            // console.logBytes32(dataBlock);
             bytes32 keyStream = keccak256(abi.encode(key, bytes32((uint256(iv) + i)/32)));
+            // console.log("\t\tcipherCTR5 keyStream:");
+            // console.logBytes32(keyStream);
             bytes32 cipherBlock = dataBlock ^ keyStream;
+            // console.log("\t\tcipherCTR5 cipherBlock:");
+            // console.logBytes32(cipherBlock);
             assembly {
                 mstore(add(result, add(i, 32)), cipherBlock)
             }
         }
+        // console.log("\tcipherCTR5 result:");
+        // console.logBytes(result);
         return result;
     }
 
@@ -126,7 +145,7 @@ library CipherLib {
         bytes32 iv
     ) public pure returns (bytes32 result) {
         uint256 length = data.length;
-        
+
         assembly {
             result := mload(0x40)
             mstore(0x40, add(add(result, length), 32))

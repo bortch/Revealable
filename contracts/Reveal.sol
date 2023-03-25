@@ -7,9 +7,11 @@ import "@openzeppelin/contracts/utils/Strings.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
 import "@openzeppelin/contracts/utils/Base64.sol";
 import "./CipherLib.sol";
+//import "hardhat/// console.sol";
 
 contract Reveal is ERC721, Ownable {
     using Strings for uint256;
+    using Strings for uint16;
     using Counters for Counters.Counter;
 
     bool private _isRevealed = false;
@@ -20,7 +22,7 @@ contract Reveal is ERC721, Ownable {
     bytes32 private _nonce = "";
 
     // array of token ids
-    uint16[] private _hiddenIds =  [25293,3784,15829,1612,26299,58420,48545,50278,4370,51563];
+    uint16[] private _hiddenIds = [0x56f2,0x8eaa,0x05f5,0x06a4,0xefeb,0x4568,0xc508,0x9392,0xbd81,0x1cb0];
 
     // Constructor will be called on contract creation
     constructor() ERC721("Reveal", "REVEAL") {
@@ -57,14 +59,28 @@ contract Reveal is ERC721, Ownable {
         uint256 tokenId
     ) public view virtual returns (string memory) {
         _requireMinted(tokenId);
+        // console.log("getMetadata\ttokenId", tokenId);
         // build and return the metadata JSON
-        bytes memory revealed = reveal(tokenId);
-        uint256 tempBytes32;
+        uint256 displayId = tokenId;
 
-        assembly {
-            tempBytes32 := mload(add(revealed, 0x20))
+        if(_isRevealed) {
+            bytes memory revealed = reveal(tokenId);
+            // console.log("getMetadata\trevealed");
+            // console.logBytes(revealed);
+            // crop to bytes2
+            bytes2 tempBytes2;
+            assembly {
+                tempBytes2 := mload(add(revealed, 0x20))
+            }
+            // console.log("getMetadata\ttempBytes2");
+            // console.logBytes2(tempBytes2);
+            // convert bytes2 to string
+            uint16 tempBytes16 = uint16(tempBytes2);
+            displayId = uint256(tempBytes16);
+            // console.log("getMetadata\ttempBytes16", tempBytes16);
         }
-
+        // console.log("getMetadata\tdisplayId:",displayId);
+        
         return
             string.concat(
                 "data:application/json;base64,",
@@ -72,7 +88,7 @@ contract Reveal is ERC721, Ownable {
                     bytes(
                         string.concat(
                             '{"name": "Reveal #',
-                            tempBytes32.toString(),
+                            displayId.toString(),
                             '",',
                             '"description": "Reveal is a collection of on-chain NFTs"',
                             // add whatever you want
@@ -89,7 +105,29 @@ contract Reveal is ERC721, Ownable {
      */
     function getTokenId(uint256 n) public view returns (uint256) {
         // string to int
-        return uint256(_hiddenIds[n]);
+        // console.log("getTokenId\tn", n);
+        // console.log("getTokenId\thiddenIds:");
+        // console.log(_hiddenIds[n]);
+        return packTokenId(_hiddenIds[n]);
+    }
+
+    /**
+     * @notice returns a uint256 tokenId after being packed into bytes
+     */
+    function packTokenId(uint16 tokenId) public view returns (uint256 packed){
+        // uint16 into bytes2
+        bytes2 _tokenId = bytes2(tokenId);
+        // console.log("packTokenId\t_tokenId in bytes2");
+        // console.logBytes2(_tokenId);
+        // bytes2 into bytes32 for padding
+        bytes32 _packed = bytes32(_tokenId);
+        // console.log("packTokenId\t_packed in bytes32");
+        // console.logBytes32(_packed);
+        // bytes32 into equivalent uint256
+        packed = uint256(_packed);
+        // console.log("packTokenId\t_packed in uint256");
+        // console.log(packed);
+        return packed;
     }
 
     function mint() public {
@@ -98,32 +136,36 @@ contract Reveal is ERC721, Ownable {
         require(_counter.current() <= _maxSupply, "Max supply reached");
         // get the token id
         uint256 tokenKey = _counter.current();
-        uint256 tokenId = _hiddenIds[tokenKey];
+        uint256 tokenId = packTokenId(_hiddenIds[tokenKey]);
         _safeMint(msg.sender, tokenId);
     }
 
+    /**
+     * @notice returns the revealed token id
+     * @param tokenId the token id
+     * @return bytes the revealed token id as bytes array (containing 32 bytes)
+     */
     function reveal(uint256 tokenId) public view returns (bytes memory) {
-        bytes memory tokenIdBytes = abi.encodePacked(tokenId);
+        bytes32 _tokenId = bytes32(tokenId);
+        // console.log("reveal\t_tokenId in bytes32");
+        // console.logBytes32(_tokenId);
 
+        // transform tokenId into equivalent bytes32 then into bytes
+        bytes memory tokenIdBytes = abi.encodePacked(bytes32(tokenId));
+        // console.log("reveal\ttokenId in Bytes");
+        // console.logBytes(tokenIdBytes);
         if (!_isRevealed) {
             return tokenIdBytes;
         }
-        return cipher_CTR5(tokenIdBytes, _revealKey, _nonce);
+        return cipher(tokenIdBytes, _revealKey, _nonce);
     }
 
-    // function cipher_CTR( bytes memory data, bytes memory key) public pure returns (bytes memory result) {
-    //     return CipherLib.cipherCTR(data, key);
-    // }
-
-    // function cipher_CTR2( bytes memory data, bytes memory key) public pure returns (bytes memory result) {
-    //     return CipherLib.cipherCTR2(data, key);
-    // }
-
-    function cipher_CTR5(
+    // set to pure
+    function cipher(
         bytes memory data,
         bytes32 key,
         bytes32 iv
-    ) public pure returns (bytes memory result) {
+    ) public view returns (bytes memory result) {
         return CipherLib.cipherCTR5(data, key, iv);
     }
 }

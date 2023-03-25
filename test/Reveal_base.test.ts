@@ -1,11 +1,11 @@
 
 import { expect } from 'chai';
 import { ethers } from "hardhat";
+import { BigNumber, FixedNumber } from "@ethersproject/bignumber";
 import { base64encode, base64decode } from 'nodejs-base64';
 var chaiJsonEqual = require('chai-json-equal');
 var chai = require('chai');
 chai.use(chaiJsonEqual);
-//import { encryptData,decryptData,getKey, getIV } from './encrypt';
 
 // Start test block
 describe('Reveal', function () {
@@ -24,7 +24,6 @@ describe('Reveal', function () {
       libraries: {
         CipherLib: this.cipherLib.address
       },
-      //signer: this.owner,
     });
   });
 
@@ -48,42 +47,44 @@ describe('Reveal', function () {
 
   // Test cases
 
+  it('should cipher and decipher data', async function () {
+    const data = ethers.utils.formatBytes32String("Hello World");
+    const key = ethers.utils.formatBytes32String("mysecretkey");
+    const iv = ethers.utils.formatBytes32String("mysecretiv");
+    const cipherMessage = await this.reveal.cipher(data, key, iv);
+    const decipherMessage = await this.reveal.cipher(cipherMessage, key, iv);
+    //console.log(data, key, cipherMessage, decipherMessage);
+    expect(decipherMessage).to.equal(data,`data: ${data}\nkey: ${key}\ncipherMessage: ${cipherMessage}\ndecipherMessage: ${decipherMessage}`);
+  });
 
-  // it('should cipher and decipher data', async function () {
-  //   const data = ethers.utils.formatBytes32String("Hello World");
-  //   const key = ethers.utils.formatBytes32String("mysecretkey");
-  //   const cipherMessage = await this.reveal.cipher_CTR(data, key);
-  //   const decipherMessage = await this.reveal.cipher_CTR(cipherMessage, key);
-  //   //console.log(data, key, cipherMessage, decipherMessage);
-  //   expect(decipherMessage).to.equal(data);
-  // });
+  it('should cipher and decipher an uint256 with CTR', async function () {
+    const data = ethers.utils.hexZeroPad(ethers.utils.hexlify(1), 32);
+    const key = ethers.utils.formatBytes32String("mysecretkey");
+    const iv = ethers.utils.formatBytes32String("mysecretiv");
+    const cipherMessage = await this.reveal.cipher(data, key, iv);
+    const decipherMessage = await this.reveal.cipher(cipherMessage, key, iv);
+    //console.log(data, key, cipherMessage, decipherMessage);
+    expect(decipherMessage).to.equal(data, `data: ${data}\nkey: ${key}\ncipherMessage: ${cipherMessage}\ndecipherMessage: ${decipherMessage}`);
+  });
 
-  // it('should cipher and decipher an uint256 with CTR', async function () {
-  //   const data = ethers.utils.hexZeroPad(ethers.utils.hexlify(1), 32);
-  //   const key = ethers.utils.formatBytes32String("mysecretkey");
-  //   const cipherMessage = await this.reveal.cipher_CTR(data, key);
-  //   const decipherMessage = await this.reveal.cipher_CTR(cipherMessage, key);
-  //   //console.log(data, key, cipherMessage, decipherMessage);
-  //   expect(decipherMessage).to.equal(data);
-  // });
-
-  // it('should cipher and decipher data 2', async function () {
-  //   const data = ethers.utils.formatBytes32String("Hello World");
-  //   const key = ethers.utils.formatBytes32String("mysecretkey");
-  //   const cipherMessage = await this.reveal.cipher_CTR2(data, key);
-  //   const decipherMessage = await this.reveal.cipher_CTR2(cipherMessage, key);
-  //   //console.log(data, key, cipherMessage, decipherMessage);
-  //   expect(decipherMessage).to.equal(data);
-  // });
+  it('should cipher and decipher data 2', async function () {
+    const data = ethers.utils.formatBytes32String("Hello World");
+    const key = ethers.utils.formatBytes32String("mysecretkey");
+    const iv = ethers.utils.formatBytes32String("mysecretiv");
+    const cipherMessage = await this.reveal.cipher(data, key, iv);
+    const decipherMessage = await this.reveal.cipher(cipherMessage, key, iv);
+    //console.log(data, key, cipherMessage, decipherMessage);
+    expect(decipherMessage).to.equal(data, `data: ${data}\nkey: ${key}\ncipherMessage: ${cipherMessage}\ndecipherMessage: ${decipherMessage}`);
+  });
 
   it('should cipher and decipher 32 bytes data with CTR5', async function () {
     const data = ethers.utils.formatBytes32String("Hello World");
     const key = ethers.utils.formatBytes32String("mysecretkey");
     const iv = ethers.utils.formatBytes32String("mysecretiv");
-    const cipherMessage = await this.reveal.cipher_CTR5(data, key, iv);
-    const decipherMessage = await this.reveal.cipher_CTR5(cipherMessage, key, iv);
+    const cipherMessage = await this.reveal.cipher(data, key, iv);
+    const decipherMessage = await this.reveal.cipher(cipherMessage, key, iv);
     //console.log(`data: ${data}\nkey: ${key}\niv: ${iv}\ncipherMessage: ${cipherMessage}\ndecipherMessage: ${decipherMessage}`);
-    expect(decipherMessage).to.equal(data);
+    expect(decipherMessage).to.equal(data, `data: ${data}\nkey: ${key}\niv: ${iv}\ncipherMessage: ${cipherMessage}\ndecipherMessage: ${decipherMessage}`);
   });
 
   it('should cipher and decipher an array of 250 random 8 bits data with CTR5', async function () {
@@ -95,14 +96,14 @@ describe('Reveal', function () {
     const cipherData: Uint8Array = new Uint8Array(250);
     const decipherData: Uint8Array = new Uint8Array(250);
     for (let index = 0; index < data.length; index++) {
-      cipherData[index] = await this.reveal.cipher_CTR5(data[index], key, iv);
+      cipherData[index] = await this.reveal.cipher(data[index], key, iv);
     }
     for (let index = 0; index < data.length; index++) {
-      decipherData[index] = await this.reveal.cipher_CTR5(cipherData[index], key, iv)
+      decipherData[index] = await this.reveal.cipher(cipherData[index], key, iv)
     }
     // console.log(`data: ${data}\nkey: ${key}\niv: ${iv}\ncipherData: ${cipherData}\ndecipherMessage: ${decipherData}`);
     for (let index = 0; index < data.length; index++) {
-      expect(decipherData[index]).to.equal(data[index]);
+      expect(decipherData[index]).to.equal(data[index]), `data: ${data[index]}\ncipherData: ${cipherData[index]}\ndecipherMessage: ${decipherData[index]}`;
     }
   });
 
@@ -110,10 +111,10 @@ describe('Reveal', function () {
     const data = ethers.BigNumber.from(28266).toHexString();
     const key = "0xc5d5c2a9e010e331c5a3c56ae0a9e5b6b9eeb00f12508e620c2c12f719919637";
     const iv = "0xabc42b060643064ff293bb9f18174ef81b235f6e3814d2d23372c079f2f4bfee";
-    const cipherMessage = await this.reveal.cipher_CTR5(data, key, iv);
-    const decipherMessage = await this.reveal.cipher_CTR5(cipherMessage, key, iv);
+    const cipherMessage = await this.reveal.cipher(data, key, iv);
+    const decipherMessage = await this.reveal.cipher(cipherMessage, key, iv);
     // console.log(`data: ${data}\nkey: ${key}\niv: ${iv}\ncipherMessage: ${cipherMessage}\ndecipherMessage: ${decipherMessage}`);
-    expect(decipherMessage).to.equal(data);
+    expect(decipherMessage).to.equal(data, `data: ${data}\nkey: ${key}\niv: ${iv}\ncipherMessage: ${cipherMessage}\ndecipherMessage: ${decipherMessage}`);
   });
 
 
@@ -129,15 +130,16 @@ describe('Reveal', function () {
       const data = test_case[index].data;
       const key = test_case[index].key;
       const iv = test_case[index].iv;
-      const cipherMessage = await this.reveal.cipher_CTR5(data, key, iv);
-      const decipherMessage = await this.reveal.cipher_CTR5(cipherMessage, key, iv);
+      const cipherMessage = await this.reveal.cipher(data, key, iv);
+      const decipherMessage = await this.reveal.cipher(cipherMessage, key, iv);
+      //console.log(`data: ${data}\nkey: ${key}\niv: ${iv}\ncipherMessage: ${cipherMessage}\ndecipherMessage: ${decipherMessage}`);
     expect(decipherMessage).to.equal(ethers.BigNumber.from(data).toHexString(),`data: ${data}\tkey: ${key}\tiv: ${iv}
     \nfailing Ciphered:${test_case[index].cipherData}\tdeciphered:${test_case[index].decipherData} 
     \ncipherMessage: ${cipherMessage}\tdecipherMessage: ${decipherMessage}`);
     }
   });
 
-  it('should cipher and decipher an array of 250 random uint16 with CTR5', async function () {
+  it('should cipher and decipher an array of n random uint16 with CTR5', async function () {
     const _size = 10;
     let data: Uint16Array = new Uint16Array(_size);
     // fill array with random number limited to 16 bit uint
@@ -148,21 +150,25 @@ describe('Reveal', function () {
     }
     const key = ethers.BigNumber.from(ethers.utils.randomBytes(32)).toHexString();
     const iv = ethers.BigNumber.from(ethers.utils.randomBytes(32)).toHexString();
-    // cipherData is an array of bytes
-    const cipherData: Uint16Array = new Uint16Array(_size);
-    const decipherData: Uint16Array = new Uint16Array(_size);
+    // cipherData is an array of 32bytes big numbers
+    const cipherDataString: string[]=[];
+    const cipherData: BigNumber[] = new Array(_size);
+    const decipherData: BigNumber[] = new Array(_size);
     for (let index = 0; index < data.length; index++) {
-      cipherData[index] = await this.reveal.cipher_CTR5(data[index], key, iv);
+      const cd:BigNumber = await this.reveal.cipher(data[index], key, iv);
+      //console.log("ciphered as string",cd.toString());
+      cipherData[index] = cd;
+      cipherDataString[index]=ethers.utils.formatBytes32String(cd.toString())
       // convert to hex string
-      decipherData[index] = await this.reveal.cipher_CTR5(cipherData[index], key, iv);
+      decipherData[index] = await this.reveal.cipher(cipherData[index], key, iv);
       //console.log(`{data: ${data[index]},\tkey: '${key}',\tiv: '${iv}',\tcipherData: ${cipherData[index]},\tdecipherData: ${decipherData[index]}}`);
-      expect(decipherData[index]).to.equal(data[index],`{data: ${data[index]},\tkey: '${key}',\tiv: '${iv}',\tcipherData: ${cipherData[index]},\tdecipherData: ${decipherData[index]}}`);
-      
+      expect(decipherData[index]).to.equal(ethers.BigNumber.from(data[index]).toHexString(),`{data: ${data[index]},\tkey: '${key}',\tiv: '${iv}',\tcipherData: ${cipherData[index]},\tdecipherData: ${decipherData[index]}}`);
     }
-    //console.log(`data: ${data}\nkey: ${key}\niv: ${iv}\ncipherData: ${cipherData}\ndecipherMessage: ${decipherData}`);
+    //console.log(`{data: [${data}],\nkey: '${key}',\niv: '${iv}',\ncipherData: [${cipherData}],\ndecipherMessage: [${decipherData}]}`);
+    //console.log(cipherDataString);
   });
 
-  it('should cipher and decipher an array of 250 random 16 bits in Hex string with CTR5', async function () {
+  it('should cipher and decipher an array of 250 random 16 bits in Hex string with CTR', async function () {
     let data: string[] = [];
     // fill array with random number limited to 16 bit uint
     for (let index = 0; index < 250; index++) {
@@ -174,21 +180,21 @@ describe('Reveal', function () {
     const cipherData: string[] = [];
     const decipherData: string[] = [];
     for (let index = 0; index < data.length; index++) {
-      cipherData[index] = await this.reveal.cipher_CTR5(data[index], key, iv);
-      decipherData[index] = await this.reveal.cipher_CTR5(cipherData[index], key, iv);
+      cipherData[index] = await this.reveal.cipher(data[index], key, iv);
+      decipherData[index] = await this.reveal.cipher(cipherData[index], key, iv);
       expect(decipherData[index]).to.equal(data[index]);
     }
     // console.log(`data: ${data}\nkey: ${key}\niv: ${iv}\ncipherData: ${cipherData}\ndecipherMessage: ${decipherData}`);
   });
 
-  it('should cipher and decipher an uint256 with CTR5', async function () {
+  it('should cipher and decipher an uint256 with CTR', async function () {
     const data = ethers.utils.hexZeroPad(ethers.utils.hexlify(1), 32);
     const key = ethers.utils.formatBytes32String("mysecretkey");
     const iv = ethers.utils.hexZeroPad(ethers.utils.hexlify(42), 32);
-    const cipherMessage = await this.reveal.cipher_CTR5(data, key, iv);
-    const decipherMessage = await this.reveal.cipher_CTR5(cipherMessage, key, iv);
+    const cipherMessage = await this.reveal.cipher(data, key, iv);
+    const decipherMessage = await this.reveal.cipher(cipherMessage, key, iv);
     //console.log(`data: ${data}\nkey: ${key}\niv: ${iv}\ncipherMessage: ${cipherMessage}\ndecipherMessage: ${decipherMessage}`);
-    expect(decipherMessage).to.equal(data);
+    expect(decipherMessage).to.equal(data,`data: ${data}\tkey: ${key}\tiv: ${iv}\tcipherMessage: ${cipherMessage}\tdecipherMessage: ${decipherMessage}`);
   });
 
   it('Creates a token collection with a name', async function () {
@@ -204,7 +210,7 @@ describe('Reveal', function () {
   it('Mints initial set of NFTs from collection to owner', async function () {
     for (let i = 0; i < this.initialMint.length; i++) {
       let tokenId = await this.reveal.getTokenId(this.initialMint[i]);
-      expect(await this.reveal.ownerOf(tokenId)).to.equal(this.owner);
+      expect(await this.reveal.ownerOf(tokenId)).to.equal(this.owner,`tokenId: ${tokenId}, owner of tokenId: ${await this.reveal.ownerOf(tokenId)}, expected owner: ${this.owner}`);
     }
   });
 
@@ -217,35 +223,37 @@ describe('Reveal', function () {
       let tokenUri_json = JSON.parse(base64decode(tokenURI.split(',')[1]));
       //console.log(tokenUri_json);
       let tokenId_received = ethers.BigNumber.from(tokenUri_json.name.split('#')[1]);
-      expect(tokenId_received).to.equal(tokenId);
+      expect(tokenId_received).to.equal(tokenId,`tokenId received: ${tokenId_received}, tokenId expected: ${tokenId}`);
     }
   });
 
   it('Should get decrypted token if revealed', async function () {
     const test_case ={
-    data: [40680,62189,49648,64105,39582,6161,16772,14403,60727,13646],
-    key: '0x4a7f44b0a232173bafa4d3e3c6cb14434ae99209fc19c8b8d8c459a03e8f369a',
-    iv: '0x12203a7dd451ff94aaf1cdb86100114e4d1ef27741877d42db32e769a732680b',
-    cipherData: [25293,3784,15829,1612,26299,58420,48545,50278,4370,51563],
-    decipherData: [40680,62189,49648,64105,39582,6161,16772,14403,60727,13646]};
-
-    const expectedTokenId = ['0x1d33', '0x8232', '0x325c', '0xf5e9', '0x299c', '0xb106', '0x2d37', '0xcba2', '0x5974', '0xd905', '0xa077', '0xff14', '0x45d6', '0xa41b', '0xa13b', '0x5c86', '0xe2cc', '0xf744', '0xedd2', '0xc626', '0xa8df', '0x96f0', '0x7ce5', '0x8632', '0x9d95', '0xb3b3', '0xadac', '0x9ea5', '0x764e', '0xc5f7', '0x9f9c', '0x9091', '0x04e7', '0xddc1', '0x9542', '0x91b9', '0x0cd7', '0x7243', '0x8617', '0xd42e', '0x5b95', '0x3fcf', '0x1bdb', '0x6883', '0xca29', '0xb3a0', '0xf38e', '0xde54', '0x8b39', '0xd9c1', '0x7e48', '0x3ebe', '0xba8f', '0xe6e2', '0x2cfe', '0x9b', '0xdad0', '0x92ec', '0x12a7', '0x30d1', '0xa14e', '0x1574', '0x7bb2', '0xb08d', '0x6890', '0xdcbe', '0x5a23', '0x1432', '0x5b1e', '0xacd9', '0x3122', '0x1997', '0x1f1d', '0x18a6', '0xbe86', '0xbd49', '0xdf0e', '0xc22e', '0x221b', '0xbb37', '0x7de6', '0xb0fa', '0xf2ed', '0x62b9', '0x16e8', '0xff4e', '0x6fca', '0x1472', '0x3f44', '0x1236', '0x2624', '0xfbbe', '0xb1fa', '0xcc45', '0xef1d', '0xaba7', '0x25d4', '0x36ee', '0x5f62', '0x3635', '0xf1b2', '0x3431', '0xcbe2', '0x298c', '0x1306', '0x4a61', '0x481c', '0xdd69', '0x0984', '0x06a6', '0x5dff', '0x9507', '0x4fe1', '0xf8ad', '0xdedd', '0xbc48', '0xa5b8', '0xf6f9', '0x0924', '0x05ef', '0x6731', '0x2015', '0xfc07', '0xcab2', '0xcda4', '0x6f37', '0xcb27', '0xd4f5', '0x86c7', '0x088f', '0x5a2a', '0x1ac6', '0x1a06', '0xe73d', '0xe071', '0xa766', '0x36ec', '0xea94', '0x9c82', '0x7313', '0xcfa3', '0x2074', '0x3332', '0x20c5', '0xb66d', '0x8762', '0x76dd', '0xf210', '0x221f', '0xc753', '0x805e', '0x8945', '0x8e70', '0xd712', '0xe349', '0x0279', '0xb447', '0xb9d3', '0xee4e', '0x1eef', '0x96f9', '0x1084', '0x95d5', '0x4ccd', '0xba66', '0x4017', '0x95f2', '0x37fb', '0xb8e5', '0xd1ac', '0xf9a4', '0x0986', '0xf1e8', '0xd324', '0xcc3d', '0x9f21', '0x6cf4', '0x1487', '0x1140', '0x3a0a', '0xadaf', '0xfa11', '0xc83a', '0x5555', '0xa55f', '0x5231', '0x278b', '0xd9b6', '0xa411', '0x715e', '0x67a3', '0xdac5', '0x415a', '0x6eb4', '0x64a7', '0x2445', '0x7214', '0x4252', '0x6869', '0x954c', '0xa187', '0x8896', '0x5fd6', '0x5b58', '0x5aef', '0x7ed4', '0xcf23', '0xc8c1', '0x8156', '0xbc55', '0x08fc', '0x7972', '0x1a51', '0x93c4', '0xc3f8', '0x8a2d', '0x996f', '0xbd02', '0x2db7', '0x23d1', '0x4711', '0x8598', '0x2875', '0x4fef', '0xffac', '0xf02a', '0xe58f', '0x9967', '0x4bb4', '0xe25b', '0x434d', '0xfa', '0x16e5', '0xecf6', '0x995f', '0x5540', '0xeb66', '0xcd14', '0xf261', '0x8e09', '0xe2cb', '0xc672', '0x0a5f', '0xeece', '0x1618', '0xbc26', '0x38bd', '0x0458', '0xdc31', '0x14f7'
-    ];
+      data: [4062,55174,23769,24456,46791,7236,39972,51902,58541,17820],
+      key: '0xcaa6e3191f88601644b74e72893e1b392583b6a04f71511bcc2a8b7280933604',
+      iv: '0xe92f5949babb53eb160f01da9321a6e7744a28f4795f38cb5bba1b6b73e1acbe',
+      cipherData: [0x56f2,0x8eaa,0x05f5,0x06a4,0xefeb,0x4568,0xc508,0x9392,0xbd81,0x1cb0],
+      decipherMessage: [0x0fde,0xd786,0x5cd9,0x5f88,0xb6c7,0x1c44,0x9c24,0xcabe,0xe4ad,0x459c]}
+      
+      ;
+      // console.log("test_case\n", test_case);
     for (let i = 0; i < this.initialMint.length; i++) {
-      let tokenId = await this.reveal.getTokenId(this.initialMint[i]);
-      //console.log(tokenId);
+      const index = this.initialMint[i];
+      // console.log("\nthis.initialMint[i] ", index);
+      let tokenId = await this.reveal.getTokenId(index);
+      // console.log("tokenId: ", tokenId, " hex: ", ethers.BigNumber.from(tokenId).toHexString());
       // reveal the token
       await this.reveal.setRevealKey(test_case.key, test_case.iv);
       let tokenURI = await this.reveal.reveal(tokenId);
-      console.log(tokenURI);
-      expect(true).to.equal(true);
-      // let tokenURI = await this.reveal.tokenURI(tokenId);
-      // // extract the encrypted token from the tokenURI
-      // // tokenUri is a base64 encoded string
-      // let tokenUri_json = JSON.parse(base64decode(tokenURI.split(',')[1]));
+      // console.log("tokenURI: ", tokenURI);
+      
+      tokenURI = await this.reveal.tokenURI(tokenId);
+      // extract the encrypted token from the tokenURI
+      // tokenUri is a base64 encoded string
+      let tokenUri_json = JSON.parse(base64decode(tokenURI.split(',')[1]));
       // console.log(tokenUri_json);
-      // let tokenId_received = ethers.BigNumber.from(tokenUri_json.name.split('#')[1]);
-      // expect(tokenId_received).to.equal(ethers.BigNumber.from(expectedTokenId[i]));
+      let tokenId_received = ethers.BigNumber.from(tokenUri_json.name.split('#')[1]);
+      expect(tokenId_received).to.equal(ethers.BigNumber.from(test_case.decipherMessage[index]), "tokenId_received: " + tokenId_received + " test_case.decipherMessage[i]: " + test_case.decipherMessage[index]);
     }
   });
 
