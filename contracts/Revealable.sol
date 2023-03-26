@@ -5,6 +5,8 @@ pragma solidity 0.8.17;
  * @title Revealable Contract
  * @author Bortch
  * @notice Reveal is a contract that can hide and reveal a secret
+ * @dev just inherit from this contract to add the reveal feature
+ * @dev add you hidden values in the _hiddenValue array
  */
 contract Revealable is Ownable {
     bool internal _isRevealed = false;
