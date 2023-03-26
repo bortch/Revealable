@@ -6,7 +6,7 @@ pragma solidity 0.8.19;
 
 /*
  * @title: CipherLib
- * @dev: Bortch
+ * @author: Bortch
  * @notice: CipherLib is a library that contains methods to encrypt and decrypt data
  * @link: https://github.com/ethereum/wiki/wiki/Web3-Secret-Storage-Definition/b66dfbe3e84287f6fa61c079007255270cd20c14
  */
@@ -101,7 +101,7 @@ library CipherLib {
         bytes memory data,
         bytes32 key,
         bytes32 iv
-    ) public view returns (bytes memory result) {
+    ) public pure returns (bytes memory result) {
         // console.log("\n\tcipherCTR5 data:");
         // console.logBytes(data);
         // console.log("\tcipherCTR5 key:");

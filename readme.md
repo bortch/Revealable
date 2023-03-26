@@ -116,9 +116,9 @@ npx hardhat test
 In our example, the artist randomly defines an order in which the NFTs will be assigned.
 He defines a list of values where each value will refer to an NFT. This can be a serial number, a DNA, an address.
 
-Collectors will mine on a first come, first served basis. The allocation will be done in the order of minting.
+Collectors will mint on a first come, first served basis. The attribution will be done in the order of minting.
 
-Let's take an example of a secret that is an array of 16 bytes.
+Our secret is an array of 16 bytes.
 
 ```typescript
     uint16[] private _ids;
@@ -140,7 +140,7 @@ We then hardcoded the resulting table into the contract.
     uint16[] private _ids = [0x56f2,0x8eaa,0x05f5,0x06a4,0xefeb,0x4568,0xc508,0x9392,0xbd81,0x1cb0];
 ```
 
-According to the description of IERC721Metadata, we need a `tokenURI(uint256 tokenId) → string` callable function which returns either a link to a resource or metadata following a certain scheme. Since we are doing OnChain, we will return metadata instead.
+According to the description of IERC721Metadata, we need a `tokenURI(uint256 tokenId) → string` callable function which returns either a link to a resource or metadata that follow a certain schema. Since we are doing OnChain, we will return metadata instead.
 
 ```typescript
 function tokenURI(

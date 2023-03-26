@@ -9,6 +9,11 @@ import "@openzeppelin/contracts/utils/Base64.sol";
 import "./CipherLib.sol";
 //import "hardhat/// console.sol";
 
+/**
+* @title Reveal a Revealable Contract
+* @author Bortch
+* @notice Reveal is a contract that can hide and reveal a secret
+*/
 contract Reveal is ERC721, Ownable {
     using Strings for uint256;
     using Strings for uint16;
