@@ -1,5 +1,7 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.17;
+pragma solidity 0.8.19;
+
+import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 
 /**
  * @title Revealable Contract
@@ -48,7 +50,7 @@ contract Revealable is Ownable {
      * @return uint256 the revealed value as uint256
      */
     function revealIndex(uint256 index) internal view returns (uint256) {
-        return literalConvertBytesToUint256(reveal(getHiddenValue(_tokenId)))
+        return literalConvertBytesToUint256(reveal(getHiddenValue(index)));
     }
 
     /**
@@ -62,7 +64,8 @@ contract Revealable is Ownable {
 
     /**
      * @notice returns the nth hidden value as 256 bits
-     * @param n the nth hidden value
+     * @param index the nth hidden value
+     * @return uint256 the hidden value as uint256
      */
     function getHiddenValue(uint256 index) internal view returns (uint256) {
         return literalConvert16to256(_hiddenIds[index]);
@@ -71,6 +74,7 @@ contract Revealable is Ownable {
          /**
      * @notice The function takes an uint16 value and returns a uint256 value after being packed into bytes to get à right padding
      * @param value: an uint16 value
+     * @return uint256: the uint256 value of the uint16 value
      */
     function literalConvert16to256(uint16 value) public pure returns (uint256){
         // uint16 into bytes2
@@ -82,6 +86,7 @@ contract Revealable is Ownable {
     /**
      * @notice The function receive a bytes array and return a uint256 limited to 16 bits
      * @param data: a bytes array
+     * @return uint256: the uint256 value of the first 16 bits of the bytes array
      */
     function literalConvertBytesToUint256(bytes memory data) public pure returns (uint256){
         // bytes into bytes2 and trim the first 2 bytes
