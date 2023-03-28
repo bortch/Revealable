@@ -1,4 +1,4 @@
-# Revealable On Chain Secret Scheme for NFT
+# Revealable On Chain Secret Scheme
 
 This is a scheme to embed a **secret** in a smart contract that could be revealed by the owner of the contract.
 
@@ -6,7 +6,7 @@ This is a scheme to embed a **secret** in a smart contract that could be reveale
 
 The motivation for this scheme is to gives the owner of a smart contract the ability to hide a secret at deployment time, and reveal it later.
 
-## A concret example
+## A concret example: Primes
 
 An artist offers a series of OnChain NFTs that vary in rarity.
 
