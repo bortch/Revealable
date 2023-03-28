@@ -4,19 +4,21 @@ This is a scheme to embed a **secret** in a smart contract that could be reveale
 
 ## Motivation
 
-The motivation for this scheme is to gives the owner of a smart contract the ability to hide a secret at deployment time, and reveal it later.
+The motivation for this scheme is to gives the owner of a smart contract the ability to hide a secret value at deployment time, and reveal it later.
 
-## A concret example: Primes
+### A concret example: Primes
 
-An artist offers a series of OnChain NFTs that vary in rarity.
+The initial idea was to hide which [Primes](https://www.primes.wtf/) will be minted by the collector during the drop.
 
-The artist does not want the collector to be aware of the differences in the intrinsic qualities of each NFT so that some people will buy the best ones first and others will not want to buy the remaining NFTs.
+The artist [g56d](https://www.g56d.art/) offers a series of OnChain NFTs that vary in rarity.
 
-Each NFT should have an equal chance of being bought.
+He does not want the collector to be aware of the differences in the intrinsic qualities of each NFT and thus avoid that some people buy the best ones first and the others do not want to buy the others anymore.
+
+> Each NFT should have an equal chance of being bought.
 
 In this way, the artist can set a unit price and leave it to chance to determine who will mint which NFT.
 
-## Randomisation & obfuscation
+### Randomisation & obfuscation
 
 If the list of NTFs is published, and even if there is a pseudo-random distribution of tokens, the collector still has the possibility to calculate which NTFs he will mint.
 
