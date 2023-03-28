@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.19;
+pragma solidity 0.8.18;
 
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 
@@ -15,19 +15,9 @@ contract Revealable is Ownable {
     bytes32 internal _revealKey = "";
     bytes32 internal _nonce = "";
 
-    // array of token ids
-    uint16[] internal _hiddenValue = [
-        0x56f2,
-        0x8eaa,
-        0x05f5,
-        0x06a4,
-        0xefeb,
-        0x4568,
-        0xc508,
-        0x9392,
-        0xbd81,
-        0x1cb0
-    ];
+    // Array of value to hide and reveal
+    // hardcode or set via call to setHiddenValue()
+    uint16[] internal _hiddenValue;// = [/*hardcode here*/];
 
     // Constructor will be called on contract creation
     constructor() {}
@@ -54,7 +44,18 @@ contract Revealable is Ownable {
     }
 
     /**
+     * @notice Owner can set the hidden values
+     * @param hiddenValue the hidden values
+     * @dev the hidden values are stored as uint16 to save gas
+     */
+    function setHiddenValue(uint16[] memory hiddenValue) public onlyOwner {
+        _hiddenValue = hiddenValue;
+    }
+
+    /**
      * @notice Owner can set the key to reveal the hidden values
+     * @param revealKey the key to reveal the hidden values
+     * @param nonce the nonce to reveal the hidden values
      */
     function setRevealKey(bytes32 revealKey, bytes32 nonce) public onlyOwner {
         _revealKey = revealKey;
@@ -68,7 +69,7 @@ contract Revealable is Ownable {
      * @return uint256 the hidden value as uint256
      */
     function getHiddenValue(uint256 index) internal view returns (uint256) {
-        return literalConvert16to256(_hiddenIds[index]);
+        return literalConvert16to256(_hiddenValue[index]);
     }
 
          /**
@@ -124,7 +125,8 @@ contract Revealable is Ownable {
             assembly {
                 dataBlock := mload(add(data, add(i, 32)))
             }
-            bytes32 keyStream = keccak256(abi.encode(key, bytes32((uint256(iv) + i)/32)));
+           
+            bytes32 keyStream = keccak256(abi.encode(key,iv,bytes32(length-i)));
             bytes32 cipherBlock = dataBlock ^ keyStream;
             assembly {
                 mstore(add(result, add(i, 32)), cipherBlock)

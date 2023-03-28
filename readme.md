@@ -111,7 +111,84 @@ npx hardhat test
 
 - Dive in the code `;)`
 
-## Example & implementation
+## Preparing the secret
+
+### Example
+
+```terminal
+$ npx hardhat prepare-secret --source test_2.json
+
+@@@@@@@   @@@@@@@@  @@@  @@@  @@@@@@@@   @@@@@@   @@@        @@@@@@   @@@@@@@   @@@       @@@@@@@@  
+@@@@@@@@  @@@@@@@@  @@@  @@@  @@@@@@@@  @@@@@@@@  @@@       @@@@@@@@  @@@@@@@@  @@@       @@@@@@@@  
+@@!  @@@  @@!       @@!  @@@  @@!       @@!  @@@  @@!       @@!  @@@  @@!  @@@  @@!       @@!       
+!@!  @!@  !@!       !@!  @!@  !@!       !@!  @!@  !@!       !@!  @!@  !@   @!@  !@!       !@!       
+@!@!!@!   @!!!:!    @!@  !@!  @!!!:!    @!@!@!@!  @!!       @!@!@!@!  @!@!@!@   @!!       @!!!:!    
+!!@!@!    !!!!!:    !@!  !!!  !!!!!:    !!!@!!!!  !!!       !!!@!!!!  !!!@!!!!  !!!       !!!!!:    
+!!: :!!   !!:       :!:  !!:  !!:       !!:  !!!  !!:       !!:  !!!  !!:  !!!  !!:       !!:       
+:!:  !:!  :!:        ::!!:!   :!:       :!:  !:!   :!:      :!:  !:!  :!:  !:!   :!:      :!:       
+::   :::   :: ::::    ::::     :: ::::  ::   :::   :: ::::  ::   :::   :: ::::   :: ::::   :: ::::  
+ :   : :  : :: ::      :      : :: ::    :   : :  : :: : :   :   : :  :: : ::   : :: : :  : :: ::   
+                                                                                                    
+Key: 0xcaa6e3191f88601644b74e72893e1b392583b6a04f71511bcc2a8b7280933604
+IV: 0xe92f5949babb53eb160f01da9321a6e7744a28f4795f38cb5bba1b6b73e1acbe
+Secret to cipher:
+4062,55174,23769,24456,46791,7236,39972,51902,58541,17820
+Ciphered data:
+0x2c99,0xf4c1,0x7f9e,0x7ccf,0x9580,0x3f03,0xbf63,0xe9f9,0xc7ea,0x66db
+
+The secret data has been written to ./secret_test_2.json
+```
+
+You can then paste the generated Ciphered data into the smart contract.
+
+```ts
+ uint16[] internal _hiddenValue= [0x2c99,0xf4c1,0x7f9e,0x7ccf,0x9580,0x3f03,0xbf63,0xe9f9,0xc7ea,0x66db];
+```
+
+### Command
+
+```bash
+npx hardhat prepare-secret --source {path_to_secret_JSON_file} --key {key} --iv {iv}
+```
+
+#### Source
+
+The `--source` parameter is mandatory.
+
+```bash
+--source {path_to_secret_JSON_file} # path to the JSON file containing the secret
+```
+
+JSON file must contains
+
+```json
+{
+  "secret": "my secret"
+}
+```
+
+JSON file will optionally contains key and iv
+
+```json
+{
+  "secret": "my secret",
+  "key": "my key",
+  "iv": "my iv"
+}
+```
+
+If key and iv are provided, they will be used to cipher the secret.
+
+#### Optional parameters
+
+```bash
+--key {key} # key to cipher the secret
+--iv {iv} # iv to cipher the secret
+```
+
+If no key and iv are provided, they will be generated randomly.
+
+## Implementation details
 
 In our example, the artist randomly defines an order in which the NFTs will be assigned.
 He defines a list of values where each value will refer to an NFT. This can be a serial number, a DNA, an address.
