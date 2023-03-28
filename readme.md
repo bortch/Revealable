@@ -145,6 +145,29 @@ You can then paste the generated Ciphered data into the smart contract.
  uint16[] internal _hiddenValue= [0x2c99,0xf4c1,0x7f9e,0x7ccf,0x9580,0x3f03,0xbf63,0xe9f9,0xc7ea,0x66db];
 ```
 
+### JSON Output file
+
+the `prepare-secret` task will output a json containing the following:
+
+```bash
+{
+    "key": "0xcaa6e3191f88601644b74e72893e1b392583b6a04f71511bcc2a8b7280933604",
+    "iv": "0xe92f5949babb53eb160f01da9321a6e7744a28f4795f38cb5bba1b6b73e1acbe",
+    "cipherData": [
+        "0x2c99",
+        "0xf4c1",
+        "0x7f9e",
+        "0x7ccf",
+        "0x9580",
+        "0x3f03",
+        "0xbf63",
+        "0xe9f9",
+        "0xc7ea",
+        "0x66db"
+    ]
+}
+```
+
 ### Command
 
 ```bash
