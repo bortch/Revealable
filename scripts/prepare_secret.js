@@ -21,13 +21,24 @@ task("prepare-secret", "Prepare a secret for reveal")
         let key;
         let iv;
         if (taskArgs.key && taskArgs.iv) {
-            key = taskArgs.key;
-            iv = taskArgs.iv;
+            // check if key and iv are string
+            if(typeof taskArgs.key != "string" || typeof taskArgs.iv != "string"){
+                key = ethers.utils.formatBytes32String(taskArgs.key);
+                iv = ethers.utils.formatBytes32String(taskArgs.iv);
+            }else{
+                key = taskArgs.key;
+                iv = taskArgs.iv;
+            }
         } else {
             // if file contains key and iv, use them
             if (file.key && file.iv) {
-                key = file.key;
-                iv = file.iv;
+                if(typeof file.key != "string" || typeof file.iv != "string"){
+                    key = ethers.utils.formatBytes32String(file.key);
+                    iv = ethers.utils.formatBytes32String(file.iv);
+                }else{
+                    key = file.key;
+                    iv = file.iv;
+                }
             } else {
                 key = hre.ethers.BigNumber.from(hre.ethers.utils.randomBytes(32)).toHexString();
                 iv = hre.ethers.BigNumber.from(hre.ethers.utils.randomBytes(32)).toHexString();
