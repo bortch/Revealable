@@ -5,6 +5,19 @@ const path = require('path');
 const figlet = require('figlet');
 const chalk = require('chalk');
 
+// check if hex or string
+function isHex(str) {
+    return /[0-9A-Fa-f]{6}/g.test(str);
+}
+
+//convert input if hex or string
+function convertStringToBytes(input) {
+    if (isHex(input)) {
+        return input;
+    } else {
+        return ethers.utils.formatBytes32String(input);
+    }
+}
 
 task("prepare-secret", "Prepare a secret for reveal")
     .addParam("source", "The source of the secret")
@@ -22,23 +35,14 @@ task("prepare-secret", "Prepare a secret for reveal")
         let iv;
         if (taskArgs.key && taskArgs.iv) {
             // check if key and iv are string
-            if(typeof taskArgs.key != "string" || typeof taskArgs.iv != "string"){
-                key = ethers.utils.formatBytes32String(taskArgs.key);
-                iv = ethers.utils.formatBytes32String(taskArgs.iv);
-            }else{
-                key = taskArgs.key;
-                iv = taskArgs.iv;
-            }
+            key = convertToBytes(taskArgs.key);
+            iv = convertToBytes(taskArgs.iv);
         } else {
             // if file contains key and iv, use them
             if (file.key && file.iv) {
-                if(typeof file.key != "string" || typeof file.iv != "string"){
-                    key = ethers.utils.formatBytes32String(file.key);
-                    iv = ethers.utils.formatBytes32String(file.iv);
-                }else{
-                    key = file.key;
-                    iv = file.iv;
-                }
+                // check if key and iv are string
+                key = convertToBytes(file.key);
+                iv = convertToBytes(file.iv);
             } else {
                 key = hre.ethers.BigNumber.from(hre.ethers.utils.randomBytes(32)).toHexString();
                 iv = hre.ethers.BigNumber.from(hre.ethers.utils.randomBytes(32)).toHexString();
