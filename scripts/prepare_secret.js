@@ -35,14 +35,14 @@ task("prepare-secret", "Prepare a secret for reveal")
         let iv;
         if (taskArgs.key && taskArgs.iv) {
             // check if key and iv are string
-            key = convertToBytes(taskArgs.key);
-            iv = convertToBytes(taskArgs.iv);
+            key = convertStringToBytes(taskArgs.key);
+            iv = convertStringToBytes(taskArgs.iv);
         } else {
             // if file contains key and iv, use them
             if (file.key && file.iv) {
                 // check if key and iv are string
-                key = convertToBytes(file.key);
-                iv = convertToBytes(file.iv);
+                key = convertStringToBytes(file.key);
+                iv = convertStringToBytes(file.iv);
             } else {
                 key = hre.ethers.BigNumber.from(hre.ethers.utils.randomBytes(32)).toHexString();
                 iv = hre.ethers.BigNumber.from(hre.ethers.utils.randomBytes(32)).toHexString();
@@ -69,7 +69,7 @@ task("prepare-secret", "Prepare a secret for reveal")
         }
         console.log(`${chalk.yellow("Ciphered data:")}\n${cipherData}`);
         // create filename based on original filename
-        const filename = `secret_${taskArgs.source.split(".")[0]}.json`;
+        const filename = `ciphered_${taskArgs.source.split(".")[0]}.json`;
         // write the data to a file
         fs.writeFileSync(path.join(__dirname, filename), JSON.stringify({
             key: key,
