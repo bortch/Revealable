@@ -8,7 +8,7 @@ var chai = require('chai');
 chai.use(chaiJsonEqual);
 
 // Start test block
-describe('Reveal', function () {
+describe('Full test Reveal Contract an ERC721 Revealable Contract', function () {
   before(async function () {
     // Get the owner and collector address
     this.signers = await ethers.getSigners();
@@ -33,7 +33,7 @@ describe('Reveal', function () {
     this.reveal = await this.Reveal.deploy();
     await this.reveal.deployed();
     // Set the hidden value
-    await this.reveal.setHiddenValue([0x56f2,0x8eaa,0x05f5,0x06a4,0xefeb,0x4568,0xc508,0x9392,0xbd81,0x1cb0]);
+    await this.reveal.setHiddenValues([0x56f2,0x8eaa,0x05f5,0x06a4,0xefeb,0x4568,0xc508,0x9392,0xbd81,0x1cb0]);
     // Get the collector contract for signing transaction with collector key
     this.collectorContract = this.reveal.connect(this.signers[1]);
 
@@ -169,6 +169,22 @@ describe('Reveal', function () {
     //console.log(cipherDataString);
   });
 
+  it('should send a large array of random uint16 to the contract', async function () {
+    const _size = 2000;
+    let data:number[] = [];
+    // fill array with random number limited to 16 bit uint
+    for (let index = 0; index < _size; index++) {
+      // create random number of 16 bits and add it to the array
+      data.push(ethers.BigNumber.from(ethers.utils.randomBytes(2)).toNumber());
+    }
+    await this.reveal.setHiddenValues(data);
+    // get all the values from the contract
+    for (let index = 0; index < data.length; index++) {
+      const hiddenValue = await this.reveal.getTokenId(index);
+      expect(hiddenValue).to.deep.equal(data[index]);
+    }
+  });
+
   it('should cipher and decipher an array of 250 random 16 bits in Hex string with CTR', async function () {
     let data: string[] = [];
     // fill array with random number limited to 16 bit uint
@@ -210,14 +226,14 @@ describe('Reveal', function () {
 
   it('Mints initial set of NFTs from collection to owner', async function () {
     for (let i = 0; i < this.initialMint.length; i++) {
-      let tokenId = await this.reveal.getTokenId_test(this.initialMint[i]);
+      let tokenId = await this.reveal.getTokenId(this.initialMint[i]);
       expect(await this.reveal.ownerOf(tokenId)).to.equal(this.owner,`tokenId: ${tokenId}, owner of tokenId: ${await this.reveal.ownerOf(tokenId)}, expected owner: ${this.owner}`);
     }
   });
 
   it('Should get encrypted token if not yet revealed', async function () {
     for (let i = 0; i < this.initialMint.length; i++) {
-      let tokenId = await this.reveal.getTokenId_test(this.initialMint[i]);
+      let tokenId = await this.reveal.getTokenId(this.initialMint[i]);
       let tokenURI = await this.reveal.tokenURI(tokenId);
       // extract the encrypted token from the tokenURI
       // tokenUri is a base64 encoded string
@@ -230,34 +246,32 @@ describe('Reveal', function () {
 
   it('Should get decrypted token if revealed', async function () {
     const test_case ={
-      data: [15085,47457,48739,27943,55554,26839,57945,41829,13315,53910],
-      key: '0x2f4ace5537c7668edf3f6712a4f8bb86d86d2a93e6c47f7031e5bb23e2a04e3b',
-      iv: '0xb0a91108bcedf334c7c7a9eeebee973a6272eda3286317b93ad4d9fc194caeaf',
-      cipherData: [0x4a2f,0xc9a3,0xcea1,0x1de5,0xa9c0,0x1815,0x929b,0xd3a7,0x44c1,0xa254],
+      data: [4062,55174,23769,24456,46791,7236,39972,51902,58541,17820],
+      key: '0xcaa6e3191f88601644b74e72893e1b392583b6a04f71511bcc2a8b7280933604',
+      iv: '0xe92f5949babb53eb160f01da9321a6e7744a28f4795f38cb5bba1b6b73e1acbe',
+      cipherData: [32219,42371,11996,11661,50370,28225,60961,47291,38568,14233],
       decipherMessage: [0x3aed,0xb961,0xbe63,0x6d27,0xd902,0x68d7,0xe259,0xa365,0x3403,0xd296]}
       ;
       // console.log("test_case\n", test_case);
-    await this.reveal.setHiddenValue(test_case.cipherData);
+    await this.reveal.setHiddenValues(test_case.cipherData);
 
     for (let i = 0; i < this.initialMint.length; i++) {
       const index = this.initialMint[i];
-      console.log("\nthis.initialMint[i] ", index);
-
-      let tokenId = await this.reveal.getTokenId_test(index);
-      console.log("tokenId: ", tokenId, " hex: ", ethers.BigNumber.from(tokenId).toHexString());
-
+      //console.log("\nthis.initialMint[i] ", index);
       // reveal the token
-      await this.reveal.setRevealKey(test_case.key, test_case.iv);
-      let revealed_tokenId = await this.reveal.reveal_test(tokenId);
-      console.log("revealed TokenId: ", revealed_tokenId);
-      
-      let tokenURI = await this.reveal.tokenURI(tokenId);
+      await this.reveal.setRevealKey(test_case.key, test_case.iv);          
+      // get the tokenId
+      let tokenId = await this.reveal.getTokenId(index);
+      //console.log("tokenId: ", tokenId);
+      // get the tokenURI
+      let tokenURI = await this.reveal.tokenURI(tokenId.toNumber());
+      //console.log("tokenURI: ", tokenURI);
       // extract the encrypted token from the tokenURI
       // tokenUri is a base64 encoded string
       let tokenUri_json = JSON.parse(base64decode(tokenURI.split(',')[1]));
-      console.log(tokenUri_json);
+      //console.log(tokenUri_json);
       let tokenId_received = ethers.BigNumber.from(tokenUri_json.name.split('#')[1]);
-      expect(tokenId_received).to.equal(ethers.BigNumber.from(test_case.decipherMessage[index]), "tokenId_received: " + tokenId_received + " test_case.decipherMessage[i]: " + test_case.decipherMessage[index]);
+      expect(tokenId_received).to.equal(ethers.BigNumber.from(test_case.data[index]), "tokenId_received: " + tokenId_received + " test_case.decipherMessage[i]: " + test_case.decipherMessage[index]);
     }
   });
 
@@ -267,14 +281,14 @@ describe('Reveal', function () {
 
   it('Is able to mint new NFTs to the collection to collector', async function () {
     let nextCounter = ethers.BigNumber.from(this.initialMint.length + 1);
-    let tokenId = await this.reveal.getTokenId_test(nextCounter);
+    let tokenId = await this.reveal.getTokenId(nextCounter);
     await this.collectorContract.mint();
     expect(await this.reveal.ownerOf(tokenId)).to.equal(this.collector);
   });
 
   it('Emits a transfer event for newly minted NFTs', async function () {
     let nextCounter = ethers.BigNumber.from(this.initialMint.length + 1);
-    let tokenId = await this.reveal.getTokenId_test(nextCounter);
+    let tokenId = await this.reveal.getTokenId(nextCounter);
     await expect(this.reveal.mint()).to.emit(this.reveal, "Transfer")
       .withArgs("0x0000000000000000000000000000000000000000", this.owner, tokenId);
     //NFTs are minted from zero address
@@ -282,33 +296,33 @@ describe('Reveal', function () {
 
 
   it('Is able to transfer NFTs to another wallet when called by owner', async function () {
-    let tokenId = await this.reveal.getTokenId_test(this.initialMint[0]);
+    let tokenId = await this.reveal.getTokenId(this.initialMint[0]);
     await this.reveal["safeTransferFrom(address,address,uint256)"](this.owner, this.collector, tokenId);
     expect(await this.reveal.ownerOf(tokenId)).to.equal(this.collector);
   });
 
   it('Emits a Transfer event when transferring a NFT', async function () {
-    let tokenId = await this.reveal.getTokenId_test(this.initialMint[0]);
+    let tokenId = await this.reveal.getTokenId(this.initialMint[0]);
     await expect(this.reveal["safeTransferFrom(address,address,uint256)"](this.owner, this.collector, tokenId))
       .to.emit(this.reveal, "Transfer")
       .withArgs(this.owner, this.collector, tokenId);
   });
 
   it('Approves an operator wallet to spend owner NFT', async function () {
-    let tokenId = await this.reveal.getTokenId_test(this.initialMint[0]);
+    let tokenId = await this.reveal.getTokenId(this.initialMint[0]);
     await this.reveal.approve(this.collector, tokenId);
     expect(await this.reveal.getApproved(tokenId)).to.equal(this.collector);
   });
 
   it('Emits an Approval event when an operator is approved to spend a NFT', async function () {
-    let tokenId = await this.reveal.getTokenId_test(this.initialMint[0]);
+    let tokenId = await this.reveal.getTokenId(this.initialMint[0]);
     await expect(this.reveal.approve(this.collector, tokenId))
       .to.emit(this.reveal, "Approval")
       .withArgs(this.owner, this.collector, tokenId);
   });
 
   it('Allows operator to transfer NFT on behalf of owner', async function () {
-    let tokenId = await this.reveal.getTokenId_test(this.initialMint[0]);
+    let tokenId = await this.reveal.getTokenId(this.initialMint[0]);
     await this.reveal.approve(this.collector, tokenId);
     // Using the collector contract which has the collector's key
     await this.collectorContract["safeTransferFrom(address,address,uint256)"](this.owner, this.collector, tokenId);
@@ -338,7 +352,7 @@ describe('Reveal', function () {
   it('Allows operator to transfer all NFTs on behalf of owner', async function () {
     await this.reveal.setApprovalForAll(this.collector, true);
     for (let i = 0; i < this.initialMint.length; i++) {
-      let tokenId = await this.reveal.getTokenId_test(this.initialMint[i]);
+      let tokenId = await this.reveal.getTokenId(this.initialMint[i]);
       await this.collectorContract["safeTransferFrom(address,address,uint256)"](this.owner, this.collector, tokenId);
     }
     expect(await this.reveal.balanceOf(this.collector)).to.equal(this.initialMint.length.toString());
