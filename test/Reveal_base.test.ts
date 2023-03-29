@@ -8,22 +8,14 @@ var chai = require('chai');
 chai.use(chaiJsonEqual);
 
 // Start test block
-describe('Full test Reveal Contract an ERC721 Revealable Contract', function () {
+describe('Complete Reveal Contract testing (as ERC721-Revealable Contract)', function () {
   before(async function () {
     // Get the owner and collector address
     this.signers = await ethers.getSigners();
     this.owner = this.signers[0].address;
     this.collector = this.signers[1].address;
 
-    // // Get the CipherLib contract
-    // this.CipherLib = await ethers.getContractFactory('CipherLib');
-    // this.cipherLib = await this.CipherLib.deploy();
-    // await this.cipherLib.deployed();
-
     this.Reveal = await ethers.getContractFactory('Reveal', {
-      // libraries: {
-      //   CipherLib: this.cipherLib.address
-      // },
       signer: this.signers[0]
     });
   });
@@ -146,7 +138,6 @@ describe('Full test Reveal Contract an ERC721 Revealable Contract', function () 
     // fill array with random number limited to 16 bit uint
     for (let index = 0; index < _size; index++) {
       // create random number of 16 bits and add it to the array
-      //Math.floor(Math.random() * 65536);
       data[index] = ethers.BigNumber.from(ethers.utils.randomBytes(2)).toNumber();
     }
     const key = ethers.BigNumber.from(ethers.utils.randomBytes(32)).toHexString();
