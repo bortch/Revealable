@@ -23,9 +23,6 @@ contract Reveal is ERC721, Revealable {
     Counters.Counter private _counter;
     uint16 private _maxSupply = 5;
 
-    // // array of token ids
-    // uint16[] private override _hiddenValue = [0x56f2,0x8eaa,0x05f5,0x06a4,0xefeb,0x4568,0xc508,0x9392,0xbd81,0x1cb0];
-
     // Constructor will be called on contract creation
     constructor() ERC721("Reveal", "REVEAL") {
         _counter.reset();

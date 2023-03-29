@@ -5,7 +5,7 @@ import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import "hardhat/console.sol";
 
 /**
- * @title Revealable Contract
+ * @title Revealable Contract (Debug Version)
  * @author Bortch
  * @notice Reveal is a contract that can hide and reveal a secret
  * @dev just inherit from this contract to add the reveal feature

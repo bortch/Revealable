@@ -12,7 +12,7 @@ import "./Revealable_debug.sol";
 import "hardhat/console.sol";
 
 /**
-* @title Reveal a Revealable Contract
+* @title Reveal an ERC721-Revealable Contract (Debug Version)
 * @author Bortch
 * @notice Reveal is a contract that can hide and reveal a secret
 */
@@ -52,9 +52,11 @@ contract Reveal_debug is ERC721, Revealable_debug {
         uint256 displayId = tokenId;
 
         if(_isRevealed) {
-            console.log("Reveal::getMetadata _isRevealed: %s", _isRevealed);
-            bytes memory revealed = reveal(bytes32(tokenId));
-            console.log("Reveal::getMetadata revealed: %s");
+            bytes32 _tokenId = literalConvert_16toBytes32(uint16(tokenId));
+            console.log("Reveal::getMetadata _tokenId:");
+            console.logBytes32(_tokenId);
+            bytes memory revealed = reveal(_tokenId);
+            console.log("Reveal::getMetadata revealed:");
             console.logBytes(revealed);
             displayId = literalConvert_Bytes_to_Uint16_as_Uint256(revealed);
             console.log("Reveal::getMetadata displayId: %s", displayId);
@@ -85,9 +87,18 @@ contract Reveal_debug is ERC721, Revealable_debug {
         require(_counter.current() <= _maxSupply, "Max supply reached");
         // get the token id
         uint256 tokenKey = _counter.current();
-        uint256 tokenId = literalConvert_16to256(getHiddenValue(tokenKey));
+        uint256 tokenId = getTokenId(tokenKey);
         console.log("Reveal::mint tokenId: %s", tokenId);
         _safeMint(msg.sender, tokenId);
+    }
+
+    /**
+     * @notice returns the token id of the token at the given index
+     * @param index the index of the token
+     */
+    function getTokenId(uint256 index) public view returns (uint256) {
+        console.log("\nReveal::getTokenId called with index: %s", index);
+        return uint256(getHiddenValue(index));
     }
 
     // public function for testing
@@ -110,14 +121,6 @@ contract Reveal_debug is ERC721, Revealable_debug {
         uint256 tokenId = getHiddenValue(n);
         console.log("Reveal::getHiddenValue_test tokenId: %s", tokenId);
         return tokenId;
-        // keep first 16 bytes and trim the rest
-        // bytes memory bytesArray = new bytes(16);
-        // for (uint256 i = 0; i < 16; i++) {
-        //     bytesArray[i] = bytes32(tokenId)[i];
-        // }
-        // console.log("Reveal::getHiddenValue_test bytesArray: %s");
-        // console.logBytes(bytesArray);
-        // return literalConvert_Bytes_to_Uint16_as_Uint256(bytesArray);
     }
 
     function revealIndex_test(uint256 tokenId) public view returns (uint256) {
