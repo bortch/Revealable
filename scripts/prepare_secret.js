@@ -12,10 +12,11 @@ function isHex(str) {
 
 //convert input if hex or string
 function convertStringToBytes(input) {
-    if (isHex(input)) {
+    if (hre.ethers.utils.isHexString(input)) {
+        assert(input.length <= 64, chalk.red(`hex ${input} is too long, it must be 32 bytes or shorter`));
         return input;
     } else {
-        assert(input.length <= 32, chalk.red(`string ${input} is too long, it must be 31 bytes or shorter`));
+        assert(input.length <= 31, chalk.red(`string ${input} is too long, it must be 31 bytes or shorter`));
         const bytes = ethers.utils.formatBytes32String(input);
         return bytes;
     }
@@ -93,5 +94,5 @@ task("prepare-secret", "Prepare a secret for reveal")
             secret_to_cipher: file.secret
         }));
         // display the file path 
-        console.log(`\n${chalk.green('The secret\'s data has been written to')} ${path.join(__dirname, filename)}\n${chalk.blue('keep it safe!')}`);
+        console.log(`\n${chalk.green('The secret data has been written to')} ${path.join(__dirname, filename)}\n${chalk.blue('keep it safe!')}`);
     });
