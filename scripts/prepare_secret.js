@@ -13,7 +13,7 @@ function isHex(str) {
 //convert input if hex or string
 function convertStringToBytes(input) {
     if (hre.ethers.utils.isHexString(input)) {
-        assert(input.length <= 64, chalk.red(`hex ${input} is too long, it must be 32 bytes or shorter`));
+        //assert(input.length <= 64, chalk.red(`hex ${input} is too long, it must be 32 bytes or shorter`));
         return input;
     } else {
         assert(input.length <= 31, chalk.red(`string ${input} is too long, it must be 31 bytes or shorter`));
@@ -83,9 +83,22 @@ task("prepare-secret", "Prepare a secret for reveal")
         }
         console.log(`${chalk.yellow("Ciphered secret:")}\n${cipherData}`);
         // create filename based on original filename
-        const filename = `ciphered_${taskArgs.source.split(".")[0]}.json`;
+        const filenameSrc = taskArgs.source.split(".")[0];
+        // Output response in an "output" directory
+        // create output directory if it does not exist
+        if (!fs.existsSync(path.join(__dirname, "output"))) {
+            fs.mkdirSync(path.join(__dirname, "output"));
+        }
+        // create a file text for ciphered data
+        fs.writeFileSync(path.join(__dirname, "output", `ciphered_${filenameSrc}.txt`), JSON.stringify(cipherData));
+        // create a file .key for key
+        fs.writeFileSync(path.join(__dirname, "output", `${filenameSrc}.key`), key);
+        // create a file .iv for iv
+        fs.writeFileSync(path.join(__dirname, "output", `${filenameSrc}.iv`), iv);
+        
         // write the data to a file
-        fs.writeFileSync(path.join(__dirname, filename), JSON.stringify({
+        const filenameReport = `${filenameSrc}_report.json`;
+        fs.writeFileSync(path.join(__dirname,"output", filenameReport), JSON.stringify({
             original_key: file.key,
             original_Iv: file.iv,
             key_to_use: key,
@@ -94,5 +107,5 @@ task("prepare-secret", "Prepare a secret for reveal")
             secret_to_cipher: file.secret
         }));
         // display the file path 
-        console.log(`\n${chalk.green('The secret data has been written to')} ${path.join(__dirname, filename)}\n${chalk.blue('keep it safe!')}`);
+        console.log(`\n${chalk.yellow('The secret data has been written to')} ${path.join(__dirname, "output")}\n${chalk.blue('keep it safe!')}`);
     });
