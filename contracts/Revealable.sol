@@ -1,63 +1,127 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.18;
 
+import "hardhat/console.sol";
+
 /**
- * @title Revealable Contract
+ * @title Revealable Contract (Debug Version)
  * @author Bortch
- * @notice Reveal is a contract that can hide and reveal a secret
+ * @custom:url https://github.com/bortch/RevealOnChain
+ * @notice Revealable is a contract that can hide and reveal a secret
  * @dev just inherit from this contract to add the reveal feature
- * @dev add you hidden values in the _hiddenValues array
  */
 contract Revealable {
-    address private _owner;
-    bool internal _isRevealed = false;
-    bytes32 internal _revealKey = "";
-    bytes32 internal _nonce = "";
 
-    // Array of value to hide and reveal
-    // hardcode or set via call to setHiddenValues()
-    uint16[] internal _hiddenValues; // = [/*hardcode here*/];
+    enum RevealState {
+        Hidden,
+        Revealed,
+        Revealable
+    }
 
     modifier _ownerOnly() {
         require(msg.sender == _owner);
         _;
     }
 
+    address private _owner;
+    RevealState internal _revealState = RevealState.Hidden;
+    // Array of value to hide and reveal
+    // hardcode or set via call to setHiddenValues()
+    bytes internal _hiddenValues; // = [/*hardcode here*/];
+    bytes32 internal _revealKey = bytes32(0);
+    bytes32 internal _initialVector = bytes32(0);
+
+    event Revealed(
+        address indexed revealer,
+        bytes32 indexed revealKey,
+        bytes32 indexed nonce,
+        bytes hiddenValues
+    );
+    event HiddenValuesSet(address indexed hider, uint256[] hiddenValues);
+    event ResetKey(
+        address indexed resetter,
+        bytes32 indexed revealKey,
+        bytes32 indexed nonce
+    );
+    event ResetRevealable(address indexed resetter);
+
     // Constructor will be called on contract creation
     constructor() {
         _owner = msg.sender;
     }
 
-    /**
-     * @notice returns the revealed value
-     * @param value the value in bytes32
-     * @return bytes the revealed value as bytes array (containing 32 bytes)
-     */
-    function reveal(bytes32 value) internal view returns (bytes memory) {
-        // transform value into equivalent bytes32 then into bytes
-        bytes memory valueBytes = abi.encodePacked(value);
-        // return the revealed value
-        return cipherCTR(valueBytes, _revealKey, _nonce);
-    }
+    function reveal() public _ownerOnly {
+        // require RvealState.Revealable
+        require(
+            _revealState == RevealState.Revealable,
+            "Revealable: contract not yet revealable"
+        );
 
-    /**
-     * @notice returns the revealed value at the given index
-     * @param index the index of the hidden value to reveal
-     * @return uint256 the revealed value as uint256
-     */
-    function revealIndex(uint256 index) public view returns (uint256) {
-        // require the contract to be revealed
-        require(_isRevealed, "Revealable: contract not revealed");
-        return literalConvert_Bytes_to_Uint16_as_Uint256(reveal(literalConvert_16toBytes32(getHiddenValue(index))));
+        bytes memory hiddenValues = _hiddenValues;
+        _hiddenValues = cipherCTR(hiddenValues, _revealKey, _initialVector);
+
+        _revealState = RevealState.Revealed;
+        emit Revealed(msg.sender, _revealKey, _initialVector, _hiddenValues);
     }
 
     /**
      * @notice Owner can set the hidden values
-     * @param hiddenValue the hidden values
-     * @dev the hidden values are stored as uint16 to save gas
+     * @param values an array of hidden values
+     * @param valueSize the size of each hidden value
      */
-    function setHiddenValues(uint16[] memory hiddenValue) public _ownerOnly {
-        _hiddenValues = hiddenValue;
+    function setHiddenValues(
+        uint256[] memory values,
+        uint valueSize
+    ) public _ownerOnly {
+        // create a new array of bytes from the uint256 array
+        for (uint256 i = 0; i < values.length; i++) {
+            // for each bytes of the value
+            bytes memory valueBytes = new bytes(valueSize);
+            for (uint256 j = 0; j < valueSize; j++) {
+                //take only the valueSize first bytes lsbs
+                bytes1 value = bytes1(uint8(values[i] >> (j * 8)));
+
+                // add the value to the hiddenValue array
+                _hiddenValues.push(value);
+                valueBytes[valueSize - 1 - j] = value;
+            }
+        }
+
+        _revealState = RevealState.Hidden;
+        emit HiddenValuesSet(msg.sender, values);
+    }
+
+    /**
+     * @notice returns the nth hidden value as 256 bits
+     * @param index the nth hidden value
+     * @return uint256 the hidden value as uint256
+     */
+    function getHiddenValue(
+        uint256 index,
+        uint256 valueSize
+    ) public view returns (uint256) {
+        // reach the nth hidden value
+        uint256 hiddenValueIndex = index * valueSize;
+        bytes memory hiddenValue = new bytes(valueSize);
+        // get the n bytes of the hidden value
+        for (uint256 i = 0; i < valueSize; i++) {
+            hiddenValue[valueSize - 1 - i] = _hiddenValues[
+                hiddenValueIndex + i
+            ];
+        }
+
+        // convert the hidden value to uint of valueSize bytes
+        uint256 hiddenValueAsUint256;
+        for (uint i = 0; i < valueSize; i++) {
+            // shift the value to the left by 8 bits
+            hiddenValueAsUint256 = hiddenValueAsUint256 << 8;
+            // add the value to the hiddenValueAsUint256
+            hiddenValueAsUint256 =
+                hiddenValueAsUint256 |
+                uint256(uint8(hiddenValue[i]));
+        }
+
+        return hiddenValueAsUint256;
     }
 
     /**
@@ -66,56 +130,48 @@ contract Revealable {
      * @param nonce the nonce to reveal the hidden values
      */
     function setRevealKey(bytes32 revealKey, bytes32 nonce) public _ownerOnly {
+        require(
+            _revealState == RevealState.Hidden,
+            "Revealable: contract not hidden anymore"
+        );
         _revealKey = revealKey;
-        _nonce = nonce;
-        _isRevealed = true;
+        _initialVector = nonce;
+        require(
+            _revealKey != bytes32(0) && _initialVector != bytes32(0),
+            "Revealable: key and nonce cannot be zero"
+        );
+        // if key and nonce are set to zero, the contract is not revealed
+
+        _revealState = RevealState.Revealable;
     }
 
-    /**
-     * @notice returns the nth hidden value as 256 bits
-     * @param index the nth hidden value
-     * @return uint256 the hidden value as uint256
-     */
-    function getHiddenValue(uint256 index) internal view returns (uint16) {
-        return _hiddenValues[index];
+    function resetRevealKey(
+        bytes32 revealKey,
+        bytes32 nonce
+    ) public _ownerOnly {
+        require(
+            _revealState == RevealState.Revealable,
+            "Revealable: contract not revealable"
+        );
+
+        emit ResetKey(msg.sender, _revealKey, _initialVector);
+        _revealState = RevealState.Hidden;
+        setRevealKey(revealKey, nonce);
     }
 
-    /**
-     * @notice The function takes an uint16 value and returns a uint256 value after being packed into bytes to get à right padding
-     * @param value: an uint16 value
-     * @return uint256: the uint256 value of the uint16 value
-     */
-    function literalConvert_16to256(uint16 value) internal pure returns (uint256) {
-        // uint16 into bytes2
-        // bytes2 into bytes32 for implicite right padding
-        // bytes32 into equivalent uint256
-        return uint256(bytes32(bytes2(value)));
-    }
+    function resetReveal() public _ownerOnly {
+        require(
+            _revealState == RevealState.Revealed,
+            "Revealable: contract not revealed"
+        );
 
-    /**
-     * @notice the function explicitely convert an uint16 into bytes32
-     * @param value: an uint16 value
-     * @return bytes32: the bytes32 value of the uint16 value
-     */ 
-    function literalConvert_16toBytes32(uint16 value) internal pure returns (bytes32) {
-        return bytes32(bytes2(value));
-    }
+        // revert the cipher
+        bytes memory hiddenValues = _hiddenValues;
+        _hiddenValues = cipherCTR(hiddenValues, _revealKey, _initialVector);
 
-    /**
-     * @notice The function receive a bytes array and return a uint256 limited to 16 bits
-     * @param data: a bytes array
-     * @return uint256: the uint256 value of the first 16 bits of the bytes array
-     */
-    function literalConvert_Bytes_to_Uint16_as_Uint256(
-        bytes memory data
-    ) internal pure returns (uint256) {
-        // bytes into bytes2 and trim the first 2 bytes
-        bytes2 tempBytes2;
-        assembly {
-            tempBytes2 := mload(add(data, 0x20))
-        }
-        // bytes2 into uint16 then into uint256
-        return uint256(uint16(tempBytes2));
+        _revealState = RevealState.Revealable;
+
+        emit ResetRevealable(msg.sender);
     }
 
     /*
@@ -133,6 +189,7 @@ contract Revealable {
         bytes32 iv
     ) public pure returns (bytes memory result) {
         uint256 length = data.length;
+
         assembly {
             result := mload(0x40)
             mstore(0x40, add(add(result, length), 32))
@@ -145,14 +202,15 @@ contract Revealable {
                 dataBlock := mload(add(data, add(i, 32)))
             }
 
-            bytes32 keyStream = keccak256(
-                abi.encode(key, iv, bytes32(length - i))
-            );
+            bytes32 keyStream = keccak256(abi.encode(key, iv, i));
+
             bytes32 cipherBlock = dataBlock ^ keyStream;
+
             assembly {
                 mstore(add(result, add(i, 32)), cipherBlock)
             }
         }
+
         return result;
     }
 }

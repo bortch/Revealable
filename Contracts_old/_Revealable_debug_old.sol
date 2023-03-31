@@ -9,9 +9,9 @@ import "hardhat/console.sol";
  * @author Bortch
  * @notice Reveal is a contract that can hide and reveal a secret
  * @dev just inherit from this contract to add the reveal feature
- * @dev add you hidden values in the _hiddenValues array
+ * @dev add you hidden values in the _hiddenValue array
  */
-contract RevealableBreak_debug {
+contract Revealable_debug {
     address private _owner;
     bool internal _isRevealed = false;
     bytes32 internal _revealKey = "";
@@ -19,8 +19,7 @@ contract RevealableBreak_debug {
 
     // Array of value to hide and reveal
     // hardcode or set via call to setHiddenValues()
-    bytes internal _hiddenValues;// = [/*hardcode here*/];
-    uint256 internal _hiddenValueSize = 0;
+    uint16[] internal _hiddenValue;// = [/*hardcode here*/];
 
     modifier _ownerOnly() {
         require(msg.sender == _owner);
@@ -53,85 +52,39 @@ contract RevealableBreak_debug {
         return cipherCTR(valueBytes, _revealKey, _nonce);
     }
 
-    // /**
-    //  * @notice returns the revealed value at the given index
-    //  * @param index the index of the hidden value to reveal
-    //  * @return uint256 the revealed value as uint256
-    //  */
-    // function revealIndex(uint256 index) public view returns (uint256) {
-    //     require(_isRevealed, "Revealable: contract not revealed");
-    //     console.log("\n[\nRevealable::revealIndex called");
-    //     uint16 hiddenValue = getHiddenValue(index);
-    //     console.log("Revealable::revealIndex hiddenValue: %s", hiddenValue);
-    //     bytes memory revealedValue = reveal(literalConvert_16toBytes32(hiddenValue));
-    //     console.log("Revealable::revealIndex revealedValue:");
-    //     console.logBytes(revealedValue);
-    //     uint256 revealedValueAsUint256 = literalConvert_Bytes_to_Uint16_as_Uint256(revealedValue);
-    //     console.log("Revealable::revealIndex revealedValueAsUint256: %s", revealedValueAsUint256);
-    //     console.log("Revealable::revealIndex ends\n]\n");
-    //     return revealedValueAsUint256;
-    // }
-
     /**
-     * @notice Owner can set the hidden values
-     * @param values an array of hidden values
-     * @param valueSize the size of each hidden value
+     * @notice returns the revealed value at the given index
+     * @param index the index of the hidden value to reveal
+     * @return uint256 the revealed value as uint256
      */
-    function setHiddenValues(uint256[] memory values, uint valueSize) public _ownerOnly {
-        console.log("\n[\nRevealable::setHiddenValues called");
-        // instantiate the hiddenValues array
-        _hiddenValueSize = valueSize;
-        // create a new array of bytes from the uint256 array
-        for (uint256 i = 0; i < values.length; i++) {
-            console.log("Revealable::setHiddenValues values[%s]: %s", i, values[i]);
-            // for each bytes of the value
-            bytes memory valueBytes = new bytes(valueSize);
-            for (uint256 j = 0; j < valueSize; j++) {
-                //take only the valueSize first bytes lsbs
-                bytes1 value = bytes1(uint8(values[i] >> (j * 8)));
-
-                console.log("Revealable::setHiddenValues value %s/%s:", j, valueSize);
-                console.logBytes1(value);
-                // add the value to the hiddenValue array
-                _hiddenValues.push(value);
-                valueBytes[valueSize-1-j] = value;
-            }
-            console.log("Revealable::setHiddenValues valueBytes:");
-            console.logBytes(valueBytes);
-        }
+    function revealIndex(uint256 index) public view returns (uint256) {
+        require(_isRevealed, "Revealable: contract not revealed");
+        console.log("\n[\nRevealable::revealIndex called");
+        uint16 hiddenValue = getHiddenValue(index);
+        console.log("Revealable::revealIndex hiddenValue: %s", hiddenValue);
+        bytes memory revealedValue = reveal(literalConvert_16toBytes32(hiddenValue));
+        console.log("Revealable::revealIndex revealedValue:");
+        console.logBytes(revealedValue);
+        uint256 revealedValueAsUint256 = literalConvert_Bytes_to_Uint16_as_Uint256(revealedValue);
+        console.log("Revealable::revealIndex revealedValueAsUint256: %s", revealedValueAsUint256);
+        console.log("Revealable::revealIndex ends\n]\n");
+        return revealedValueAsUint256;
     }
 
     /**
-     * @notice returns the nth hidden value as 256 bits
-     * @param index the nth hidden value
-     * @return uint256 the hidden value as uint256
+     * @notice Owner can set the hidden values
+     * @param hiddenValue the hidden values
+     * @dev the hidden values are stored as uint16 to save gas
      */
-    function getHiddenValue(uint256 index) public view returns (uint256) {
-        console.log("\n[\nRevealable::getHiddenValue called");
-        console.log("Revealable::getHiddenValue index: %s", index);
-        // reach the nth hidden value
-        uint256 hiddenValueIndex = index * _hiddenValueSize;
-        bytes memory hiddenValue = new bytes(_hiddenValueSize);
-        // get the n bytes of the hidden value
-        for (uint256 i = 0; i < _hiddenValueSize; i++) {
-            hiddenValue[_hiddenValueSize-1-i] = _hiddenValues[hiddenValueIndex + i];
-            console.log("Revealable::getHiddenValue hiddenValue[%s]:", i);
-            console.logBytes1(hiddenValue[i]);
+    function setHiddenValues(uint16[] memory hiddenValue) public _ownerOnly {
+        //log each hidden value
+        console.log("\n[\nRevealable::setHiddenValues called");
+        console.log("Revealable::setHiddenValues hiddenValue.length: %s", hiddenValue.length);
+        for (uint256 i = 0; i < hiddenValue.length; i++) {
+            console.log("\thiddenValue[%s]: %s", i, hiddenValue[i]);
         }
-        console.log("Revealable::getHiddenValue hiddenValue:");
-        console.logBytes(hiddenValue);
-        // convert the hidden value to uint of _hiddenValueSize bytes
-        uint256 hiddenValueAsUint256;
-        for(uint i=0;i<_hiddenValueSize;i++){
-            // shift the value to the left by 8 bits
-            hiddenValueAsUint256 = hiddenValueAsUint256 << 8;
-            // add the value to the hiddenValueAsUint256
-            hiddenValueAsUint256 = hiddenValueAsUint256 | uint256(uint8(hiddenValue[i]));
-        }
-        
-        console.log("Revealable::getHiddenValue hiddenValueAsUint256: %s", hiddenValueAsUint256);
-        console.log("Revealable::getHiddenValue ends\n]\n");
-        return  hiddenValueAsUint256;
+        _hiddenValue = hiddenValue;
+        console.log("Revealable::setHiddenValues ends\n]\n");
     }
 
     /**
@@ -151,6 +104,18 @@ contract RevealableBreak_debug {
         console.log("Revealable::setRevealKey ends\n]\n");
     }
 
+    /**
+     * @notice returns the nth hidden value as 256 bits
+     * @param index the nth hidden value
+     * @return uint256 the hidden value as uint256
+     */
+    function getHiddenValue(uint256 index) internal view returns (uint16) {
+        console.log("\n[\nRevealable::getHiddenValue called");
+        console.log("Revealable::getHiddenValue index: %s", index);
+        console.log("Revealable::getHiddenValue _hiddenValue[index]: %s", _hiddenValue[index]);
+        console.log("Revealable::getHiddenValue ends\n]\n");
+        return  _hiddenValue[index];
+    }
 
          /**
      * @notice The function takes an uint16 value and returns a uint256 value after being packed into bytes to get à right padding

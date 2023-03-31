@@ -6,15 +6,13 @@ import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
 import "@openzeppelin/contracts/utils/Base64.sol";
-import "./CipherLib.sol";
 import "./Revealable.sol";
-//import "hardhat/console.sol";
 
 /**
-* @title Reveal a Revealable Contract
-* @author Bortch
-* @notice Reveal is a contract that can hide and reveal a secret
-*/
+ * @title Reveal an ERC721-Revealable Contract (Debug Version)
+ * @author Bortch
+ * @notice Reveal is a contract that can hide and reveal a secret
+ */
 contract Reveal is ERC721, Revealable {
     using Strings for uint256;
     using Strings for uint16;
@@ -45,13 +43,15 @@ contract Reveal is ERC721, Revealable {
         uint256 tokenId
     ) public view virtual returns (string memory) {
         // build and return the metadata JSON
+
         uint256 displayId = tokenId;
 
-        if(_isRevealed) {
-            bytes32 _tokenId = literalConvert_16toBytes32(uint16(tokenId));
-            bytes memory revealed = reveal(_tokenId);
-            displayId = literalConvert_Bytes_to_Uint16_as_Uint256(revealed);
-        }       
+        if (_revealState == RevealState.Revealed) {
+            // require to be minted
+            require(_exists(tokenId), "Reveal: token not minted");
+
+            displayId = getHiddenValue(tokenId, 2);
+        }
         return
             string.concat(
                 "data:application/json;base64,",
@@ -70,23 +70,28 @@ contract Reveal is ERC721, Revealable {
             );
     }
 
-
     function mint() public {
         // select next token id
         _counter.increment();
-        require(_counter.current() <= _maxSupply, "Max supply reached");
-        // get the token id
-        uint256 tokenKey = _counter.current();
-        uint256 tokenId = getTokenId(tokenKey);
+        uint256 tokenId = _counter.current();
+        require(tokenId <= _maxSupply, "Max supply reached");
+        // require tokenId don't already exist
+        require(!_exists(tokenId), "Reveal: tokenId already minted");
+        // mint
         _safeMint(msg.sender, tokenId);
+        // get the token id
+        // and save index to tokenId mapping
+        // require to be minted
+        require(_exists(tokenId), "Reveal: token not minted");
     }
 
     /**
      * @notice returns the token id of the token at the given index
-     * @param index the index of the token
+     * @param tokenId the index of the token
      */
-    function getTokenId(uint256 index) public view returns (uint256) {
-        return uint256(getHiddenValue(index));
+    function getSecretForTokenId(
+        uint256 tokenId
+    ) public view returns (uint256) {
+        return getHiddenValue(tokenId, 2);
     }
-    
 }
