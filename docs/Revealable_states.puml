@@ -1,0 +1,11 @@
+@startuml
+
+[*] -[#OrangeRed]-> Hidden : setHiddenValue()
+Hidden -[#Blue]--> Revealable : setRevealKey()
+Hidden <-[#OrangeRed]- Revealable : setHiddenValue()
+Hidden -[#Blue]-> Revealed : reveal(keys)
+Revealable -[#Blue]--> Revealed : reveal()
+Revealable <-[#OrangeRed]- Revealable : resetRevealKey()
+Revealable <-[#OrangeRed]- Revealed : resetReveal()
+Hidden <-[#OrangeRed]- Revealed : setHiddenValue()
+@enduml

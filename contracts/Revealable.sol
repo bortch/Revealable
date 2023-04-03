@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.18;
 
-import "hardhat/console.sol";
 
 /**
  * @title Revealable Contract (Debug Version)
@@ -23,45 +22,61 @@ contract Revealable {
         _;
     }
 
+    modifier hasState(RevealState state) {
+        // revert message by state
+        string memory message = "in a valid state";
+        if (state == RevealState.Hidden) {
+            message = "hidden";
+        } else if (state == RevealState.Revealed) {
+            message = "revealed";
+        } else if (state == RevealState.Revealable) {
+            message = "revealable";
+        }
+        require(_revealState == state, string.concat('Revealable: contract not ',message));
+        _;
+    }
+
     address private _owner;
     RevealState internal _revealState = RevealState.Hidden;
-    // Array of value to hide and reveal
-    // hardcode or set via call to setHiddenValues()
-    bytes internal _hiddenValues; // = [/*hardcode here*/];
-    bytes32 internal _revealKey = bytes32(0);
+    bytes internal _hiddenValues;
+    bytes32 internal _key = bytes32(0);
     bytes32 internal _initialVector = bytes32(0);
 
     event Revealed(
         address indexed revealer,
-        bytes32 indexed revealKey,
-        bytes32 indexed nonce,
+        bytes32 indexed key,
+        bytes32 indexed initialVector,
         bytes hiddenValues
     );
     event HiddenValuesSet(address indexed hider, uint256[] hiddenValues);
     event ResetKey(
         address indexed resetter,
-        bytes32 indexed revealKey,
-        bytes32 indexed nonce
+        bytes32 indexed key,
+        bytes32 indexed initialVector
     );
     event ResetRevealable(address indexed resetter);
 
-    // Constructor will be called on contract creation
     constructor() {
         _owner = msg.sender;
     }
 
-    function reveal() public _ownerOnly {
-        // require RvealState.Revealable
-        require(
-            _revealState == RevealState.Revealable,
-            "Revealable: contract not yet revealable"
-        );
-
+    function reveal() public _ownerOnly hasState(RevealState.Revealable) {
         bytes memory hiddenValues = _hiddenValues;
-        _hiddenValues = cipherCTR(hiddenValues, _revealKey, _initialVector);
+        _hiddenValues = cipherCTR(hiddenValues, _key, _initialVector);
 
         _revealState = RevealState.Revealed;
-        emit Revealed(msg.sender, _revealKey, _initialVector, _hiddenValues);
+        emit Revealed(msg.sender, _key, _initialVector, _hiddenValues);
+    }
+
+    /**
+     * @notice Owner can reveal the hidden values
+     * @param key key used to reveal the hidden values
+     * @param initialVector initial vector used to reveal the hidden values
+     */
+    function reveal(bytes32 key, bytes32 initialVector) public _ownerOnly {
+        // set key
+        setRevealKey(key, initialVector);
+        reveal();
     }
 
     /**
@@ -73,6 +88,10 @@ contract Revealable {
         uint256[] memory values,
         uint valueSize
     ) public _ownerOnly {
+        // if _hiddenValues is not empty
+        if (_hiddenValues.length > 0) {
+            delete _hiddenValues;
+        }
         // create a new array of bytes from the uint256 array
         for (uint256 i = 0; i < values.length; i++) {
             // for each bytes of the value
@@ -126,48 +145,34 @@ contract Revealable {
 
     /**
      * @notice Owner can set the key to reveal the hidden values
-     * @param revealKey the key to reveal the hidden values
-     * @param nonce the nonce to reveal the hidden values
+     * @param key the key to reveal the hidden values
+     * @param initialVector the initialVector to reveal the hidden values
      */
-    function setRevealKey(bytes32 revealKey, bytes32 nonce) public _ownerOnly {
+    function setRevealKey(bytes32 key, bytes32 initialVector) public _ownerOnly hasState(RevealState.Hidden) {
+        _key = key;
+        _initialVector = initialVector;
         require(
-            _revealState == RevealState.Hidden,
-            "Revealable: contract not hidden anymore"
+            _key != bytes32(0) && _initialVector != bytes32(0),
+            "Revealable: key and initialVector cannot be zero"
         );
-        _revealKey = revealKey;
-        _initialVector = nonce;
-        require(
-            _revealKey != bytes32(0) && _initialVector != bytes32(0),
-            "Revealable: key and nonce cannot be zero"
-        );
-        // if key and nonce are set to zero, the contract is not revealed
+        // if key and initialVector are set to zero, the contract is not revealed
 
         _revealState = RevealState.Revealable;
     }
 
     function resetRevealKey(
-        bytes32 revealKey,
-        bytes32 nonce
-    ) public _ownerOnly {
-        require(
-            _revealState == RevealState.Revealable,
-            "Revealable: contract not revealable"
-        );
-
-        emit ResetKey(msg.sender, _revealKey, _initialVector);
+        bytes32 key,
+        bytes32 initialVector
+    ) public _ownerOnly hasState(RevealState.Revealable){
+        emit ResetKey(msg.sender, _key, _initialVector);
         _revealState = RevealState.Hidden;
-        setRevealKey(revealKey, nonce);
+        setRevealKey(key, initialVector);
     }
 
-    function resetReveal() public _ownerOnly {
-        require(
-            _revealState == RevealState.Revealed,
-            "Revealable: contract not revealed"
-        );
-
+    function resetReveal() public _ownerOnly hasState(RevealState.Revealed) {
         // revert the cipher
         bytes memory hiddenValues = _hiddenValues;
-        _hiddenValues = cipherCTR(hiddenValues, _revealKey, _initialVector);
+        _hiddenValues = cipherCTR(hiddenValues, _key, _initialVector);
 
         _revealState = RevealState.Revealable;
 
