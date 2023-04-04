@@ -1,18 +1,22 @@
 @startuml
 
+hide empty description
+
 [*] -[#Fuchsia]-> Hidden: t0 - setHiddenValue()
-Hidden -[#GreenYellow]--> Revealable: t1 A - setRevealKey()
-Revealable -[#GreenYellow]--> Revealed: t2 A - reveal()
+Hidden -[#Blue]--> Revealable: t1 A - setRevealKey()
+Revealable -[#Blue]--> Revealed: t2 A - reveal()
 Hidden <-[#Fuchsia]- Revealable: r1 A - setHiddenValue()
 Revealable <-[#Fuchsia]- Revealable: r3 A - resetRevealKey()
 Revealable <-[#Fuchsia]- Revealed: r2 A - resetReveal()
-Hidden -[#GreenYellow]-> Revealed : t1 B - reveal(keys)
+Hidden -[#Blue]-> Revealed : t1 B - reveal(keys)
 Hidden <-[#Fuchsia]- Revealed: r2 B - setHiddenValue()
+
 legend right
 |= |= Code |= Description |
 |<back:#Fuchsia>   </back>| tx | transition  |
-|<back:#GreenYellow>   </back>| rx | reset transition |
+|<back:#Blue>   </back>| rx | reset transition |
 |   | A   | path A           |
 |   | B   | path B           |
 endlegend
+
 @enduml

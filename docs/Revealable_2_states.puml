@@ -1,6 +1,8 @@
 @startuml
 
-[*] -[#Fuchsia]> Hidden: t0
-Hidden -[#GreenYellow]> Revealed : t1
+hide empty description
+
+[*] -[#Blue]> Hidden: t0
+Hidden -[#Blue]--> Revealed : t1
 Hidden <-[#Fuchsia]- Revealed: r1
 @enduml
