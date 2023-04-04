@@ -1,0 +1,17 @@
+@startuml
+[*] -[#OrangeRed]-> Hidden: t0 - setHiddenValue()
+Hidden -[#Blue]--> Revealable: t1 A - setRevealKey()
+Revealable -[#Blue]--> Revealed: t2 A - reveal()
+Hidden <-[#OrangeRed]- Revealable: r1 A - setHiddenValue()
+Revealable <-[#OrangeRed]- Revealable: r3 A - resetRevealKey()
+Revealable <-[#OrangeRed]- Revealed: r2 A - resetReveal()
+Hidden -[#Blue]-> Revealed : t1 B - reveal(keys)
+Hidden <-[#OrangeRed]- Revealed: r2 B - setHiddenValue()
+legend right
+|= |= Code |= Description |
+|<back:#OrangeRed>   </back>| tx | transition  |
+|<back:#Blue>   </back>| rx | reset transition |
+|<back:#Black>   </back>| A   | path A           |
+|<back:#Black>   </back>| B   | path B           |
+endlegend
+@enduml
