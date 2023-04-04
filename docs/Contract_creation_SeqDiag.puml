@@ -24,6 +24,6 @@ deactivate net
 
 == Contract hide ==
 
-o ->o net : write encrypted_message\nin the contract
+o ->o d_contract : write encrypted_message\nin the contract
 
 @enduml
