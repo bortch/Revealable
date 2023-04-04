@@ -1,6 +1,6 @@
 @startuml
 
-[*] -[#OrangeRed]> Hidden: t0
-Hidden -[#Blue]> Revealed : t1
-Hidden <-[#OrangeRed]- Revealed: t2
+[*] -[#Fuchsia]> Hidden: t0
+Hidden -[#GreenYellow]> Revealed : t1
+Hidden <-[#Fuchsia]- Revealed: r1
 @enduml
