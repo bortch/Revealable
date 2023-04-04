@@ -74,7 +74,7 @@ it('should cipher values', async function () {
   console.log("set reveal key");
   await this.reveal.setRevealKey(test_case.key, test_case.iv);          
   console.log("ciphering data");
-  await this.reveal.reveal();
+  await this.reveal['reveal()']();
   const cipherData=[];
 
   //check that values are different
@@ -94,16 +94,15 @@ it('should decipher hidden value if revealed', async function () {
     iv: '0xe92f5949babb53eb160f01da9321a6e7744a28f4795f38cb5bba1b6b73e1acbe',
     cipherData: [32219,42371,11996,11661,50370,28225,60961,47291,38568,14233],
   };
-  
   // ciphering data
   console.log("Encoding data: ", test_case.data);
   await this.reveal.setHiddenValues(test_case.data,2);
   // try to reveal without setting the key
-  await expect(this.reveal.reveal()).to.be.revertedWith("Revealable: contract not yet revealable");
+  await expect(this.reveal['reveal()']()).to.be.revertedWith("Revealable: contract not revealable");
   console.log("set reveal key");
   await this.reveal.setRevealKey(test_case.key, test_case.iv);          
   console.log("ciphering data");
-  await this.reveal.reveal();
+  await this.reveal['reveal()']();
   const cipherData=[];
   for (let i = 0; i < test_case.data.length; i++) {
     const hiddenValue = await this.reveal.getHiddenValue(i,2);
@@ -119,11 +118,11 @@ it('should decipher hidden value if revealed', async function () {
   // reset keys
   await expect(this.reveal.resetRevealKey(wrongKey, wrongIv)).to.be.revertedWith("Revealable: contract not revealable");
   // try to reveal without resetting the reveal
-  await expect(this.reveal.reveal()).to.be.revertedWith("Revealable: contract not yet revealable");
+  await expect(this.reveal['reveal()']()).to.be.revertedWith("Revealable: contract not revealable");
 
   await this.reveal.resetReveal();
-  await expect(this.reveal.setRevealKey(wrongKey, wrongIv)).to.be.revertedWith("Revealable: contract not hidden anymore");
-  await this.reveal.reveal();
+  await expect(this.reveal.setRevealKey(wrongKey, wrongIv)).to.be.revertedWith("Revealable: contract not hidden");
+  await this.reveal['reveal()']();
   //check that values are different
   for (let i = 0; i < test_case.data.length; i++) {
     const hiddenValue = await this.reveal.getHiddenValue(i,2);
@@ -146,7 +145,7 @@ it('should cipher and decipher if revealed', async function () {
   console.log("set reveal key");
   await this.reveal.setRevealKey(test_case.key, test_case.iv);          
   console.log("ciphering data");
-  await this.reveal.reveal();
+  await this.reveal['reveal()']();
   const cipherData=[];
 
   //check that values are different
@@ -162,7 +161,7 @@ it('should cipher and decipher if revealed', async function () {
   console.log("set reveal key");
   await this.reveal.setRevealKey(test_case.key, test_case.iv);          
   console.log("Revealing data");
-  await this.reveal.reveal();
+  await this.reveal['reveal()']();
   const decipherData=[];
 
   // check that values are the same as the original data

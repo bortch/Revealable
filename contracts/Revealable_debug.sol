@@ -23,25 +23,39 @@ contract Revealable_debug {
         _;
     }
 
+    modifier hasState(RevealState state) {
+        // revert message by state
+        string memory message = "in a valid state";
+        if (state == RevealState.Hidden) {
+            message = "hidden";
+        } else if (state == RevealState.Revealed) {
+            message = "revealed";
+        } else if (state == RevealState.Revealable) {
+            message = "revealable";
+        }
+        require(_revealState == state, string.concat('Revealable: contract not ',message));
+        _;
+    }
+
     address private _owner;
     RevealState internal _revealState = RevealState.Hidden;
     // Array of value to hide and reveal
     // hardcode or set via call to setHiddenValues()
     bytes internal _hiddenValues; // = [/*hardcode here*/];
-    bytes32 internal _revealKey = bytes32(0);
+    bytes32 internal _key = bytes32(0);
     bytes32 internal _initialVector = bytes32(0);
 
     event Revealed(
         address indexed revealer,
-        bytes32 indexed revealKey,
-        bytes32 indexed nonce,
+        bytes32 indexed key,
+        bytes32 indexed initialVector,
         bytes hiddenValues
     );
     event HiddenValuesSet(address indexed hider, uint256[] hiddenValues);
     event ResetKey(
         address indexed resetter,
-        bytes32 indexed revealKey,
-        bytes32 indexed nonce
+        bytes32 indexed key,
+        bytes32 indexed initialVector
     );
     event ResetRevealable(address indexed resetter);
 
@@ -53,22 +67,28 @@ contract Revealable_debug {
         console.log("Revealable::constructor ends\n]\n");
     }
 
-    function reveal() public _ownerOnly {
-        // require RvealState.Revealable
-        require(
-            _revealState == RevealState.Revealable,
-            "Revealable: contract not yet revealable"
-        );
+    function reveal() public _ownerOnly hasState(RevealState.Revealable) {
         console.log("\n[\nRevealable::reveal called");
         console.log("Revealable::reveal _hiddenValues (before):");
         console.logBytes(_hiddenValues);
         bytes memory hiddenValues = _hiddenValues;
-        _hiddenValues = cipherCTR(hiddenValues, _revealKey, _initialVector);
+        _hiddenValues = cipherCTR(hiddenValues, _key, _initialVector);
         console.log("Revealable::reveal _hiddenValues (after):");
         console.logBytes(_hiddenValues);
         console.log("Revealable::reveal ends\n]\n");
         _revealState = RevealState.Revealed;
-        emit Revealed(msg.sender, _revealKey, _initialVector, _hiddenValues);
+        emit Revealed(msg.sender, _key, _initialVector, _hiddenValues);
+    }
+
+        /**
+     * @notice Owner can reveal the hidden values
+     * @param key key used to reveal the hidden values
+     * @param initialVector initial vector used to reveal the hidden values
+     */
+    function reveal(bytes32 key, bytes32 initialVector) public _ownerOnly  {
+        console.log("\n[\nRevealable::reveal with key called");
+        setRevealKey(key, initialVector);
+        reveal();
     }
 
     /**
@@ -82,6 +102,14 @@ contract Revealable_debug {
     ) public _ownerOnly {
         console.log("\n[\nRevealable::setHiddenValues called");
         // create a new array of bytes from the uint256 array
+        // if _hiddenValues is not empty
+        if (_hiddenValues.length > 0) {
+            console.log(
+                "Revealable::setHiddenValues not empty _hiddenValues.length: %s",
+                _hiddenValues.length
+            );
+            delete _hiddenValues;
+        }
         for (uint256 i = 0; i < values.length; i++) {
             console.log(
                 "Revealable::setHiddenValues values[%s]: %s",
@@ -157,24 +185,20 @@ contract Revealable_debug {
 
     /**
      * @notice Owner can set the key to reveal the hidden values
-     * @param revealKey the key to reveal the hidden values
-     * @param nonce the nonce to reveal the hidden values
+     * @param key the key to reveal the hidden values
+     * @param initialVector the initialVector to reveal the hidden values
      */
-    function setRevealKey(bytes32 revealKey, bytes32 nonce) public _ownerOnly {
+    function setRevealKey(bytes32 key, bytes32 initialVector) public _ownerOnly hasState(RevealState.Hidden) {
         console.log("\n[\nRevealable::setRevealKey called");
+        _key = key;
+        _initialVector = initialVector;
         require(
-            _revealState == RevealState.Hidden,
-            "Revealable: contract not hidden anymore"
+            _key != bytes32(0) && _initialVector != bytes32(0),
+            "Revealable: key and initialVector cannot be zero"
         );
-        _revealKey = revealKey;
-        _initialVector = nonce;
-        require(
-            _revealKey != bytes32(0) && _initialVector != bytes32(0),
-            "Revealable: key and nonce cannot be zero"
-        );
-        // if key and nonce are set to zero, the contract is not revealed
-        console.log("Revealable::setRevealKey _revealKey:");
-        console.logBytes32(_revealKey);
+        // if key and initialVector are set to zero, the contract is not revealed
+        console.log("Revealable::setRevealKey _key:");
+        console.logBytes32(_key);
         console.log("Revealable::setRevealKey _initialVector:");
         console.logBytes32(_initialVector);
         console.log("Revealable::setRevealKey ends\n]\n");
@@ -182,31 +206,23 @@ contract Revealable_debug {
     }
 
     function resetRevealKey(
-        bytes32 revealKey,
-        bytes32 nonce
-    ) public _ownerOnly {
-        require(
-            _revealState == RevealState.Revealable,
-            "Revealable: contract not revealable"
-        );
+        bytes32 key,
+        bytes32 initialVector
+    ) public _ownerOnly hasState(RevealState.Revealable){
         console.log("\n[\nRevealable::resetRevealKey called");
-        emit ResetKey(msg.sender, _revealKey, _initialVector);
+        emit ResetKey(msg.sender, _key, _initialVector);
         _revealState = RevealState.Hidden;
-        setRevealKey(revealKey, nonce);
-        console.log("Revealable::resetRevealKey _revealKey:");
+        setRevealKey(key, initialVector);
+        console.log("Revealable::resetRevealKey _key:");
     }
 
-    function resetReveal() public _ownerOnly {
-        require(
-            _revealState == RevealState.Revealed,
-            "Revealable: contract not revealed"
-        );
+    function resetReveal() public _ownerOnly hasState(RevealState.Revealed){
         console.log("\n[\nRevealable::resetReveal called");
         console.log("Revealable::resetReveal _hiddenValues (before):");
         console.logBytes(_hiddenValues);
         // revert the cipher
         bytes memory hiddenValues = _hiddenValues;
-        _hiddenValues = cipherCTR(hiddenValues, _revealKey, _initialVector);
+        _hiddenValues = cipherCTR(hiddenValues, _key, _initialVector);
         console.log("Revealable::resetReveal _hiddenValues (after):");
         console.logBytes(_hiddenValues);
         _revealState = RevealState.Revealable;
