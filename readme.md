@@ -4,7 +4,7 @@ This is a scheme to embed a **secret** in a smart contract that could be reveale
 
 ## Motivation
 
-The motivation for this scheme is to gives the owner of a smart contract the ability to hide a secret value at deployment time, and reveal it later.
+The motivation for this system is to give the owner of a smart contract the ability to hide a value or values at the time of deployment, and reveal them later.
 
 ### A concret example: Primes
 
@@ -12,7 +12,7 @@ The initial idea was to hide which [Primes](https://www.primes.wtf/) will be min
 
 The artist [g56d](https://www.g56d.art/) offers a series of OnChain NFTs that vary in rarity.
 
-He does not want the collector to be aware of the differences in the intrinsic qualities of each NFT and thus avoid that some people buy the best ones first and the others do not want to buy the others anymore.
+He doesn't want the collector to be aware of the differences in the intrinsic qualities of each NFT and thus avoid that some people buy the best ones first and the others do not want to buy the others anymore.
 
 > Each NFT should have an equal chance of being bought.
 
@@ -20,7 +20,7 @@ In this way, the artist can set a unit price and leave it to chance to determine
 
 ### Randomisation & obfuscation
 
-If the list of NTFs is published, and even if there is a pseudo-random distribution of tokens, the collector still has the possibility to calculate which NTFs he will mint.
+If the list of NTF's id is published, and even if there is a pseudo-random distribution of tokens, the collector still has the possibility to calculate which NTFs he will mint.
 
 There are two issues to be dealt with here. On the one hand the collector must not know what he is minting, on the other hand the order in which the NFTs are minted must be random.
 
@@ -28,7 +28,8 @@ The proposal suggests the following approach:
 
 - The creator defines a variable (like ADN) from which he can deduce the qualities of the associated NFT, but it can just as easily be an incremental number sequence
 - He creates a randomly ordered array of these variables
-- He encrypts this array (or each entries) and encodes it in the contract before deployment or sends it to the contract
+- He encrypts this array (or each entries) and encodes it in the contract before deployment or sends it to the contract after deployment
+- Then, when the time comes, he decrypts the array
 
 It can be argued here that the creator knows the position of the NFTs with more valuable qualities and could reserve them for himself to maximise his return on investment.
 With a pseudo-random function (as the blockchain is a deterministic system), it could be made more difficult for the creator to reserve the most valuable NFTs.

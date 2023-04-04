@@ -1,5 +1,5 @@
 @startuml
-!theme amiga
+
 'autonumber
 actor       Owner                       as o
 actor       Collector                   as c
