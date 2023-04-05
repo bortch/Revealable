@@ -1,7 +1,7 @@
 {
     "key": "AZERTYUIOPQSDFGHJKLMWXCVBN12345",
     "iv": "ABCDEEFGHIJKLMNOPQRSTUVWXYZ1234",
-    "secret": [
+    "value": [
         952,
         428,
         832,

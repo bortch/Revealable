@@ -17,11 +17,11 @@ function convertStringToBytes(input) {
     }
 }
 
-task("cipher", "Prepare a secret for reveal")
-    .addParam("source", "The source of the secret")
+task("cipher", "Hide a value to reveal it later")
+    .addParam("source", "The source of the value to hide")
     .addOptionalParam("valuesize", "The size of each value to be revealed", 2, types.int)
-    .addOptionalParam('key', 'The key to cipher the secret')
-    .addOptionalParam('iv', 'The iv to cipher the secret')
+    .addOptionalParam('key', 'The key to cipher the hidden value')
+    .addOptionalParam('iv', 'The iv to cipher the hidden value')
     .setAction(async (taskArgs, hre) => {
         console.log(chalk.red(figlet.textSync("Revealable", {
             font: "Poison", horizontalLayout: 'full',
@@ -55,8 +55,8 @@ task("cipher", "Prepare a secret for reveal")
             }
         }
         console.log(`${chalk.yellow("Key:")} ${key}\n${chalk.yellow("IV:")} ${iv}`);
-        const secret = file.secret;
-        console.log(`${chalk.yellow("Secret to cipher:")}\n${secret}`);
+        const secret = file.value;
+        console.log(`${chalk.yellow("Value to cipher:")}\n${secret}`);
         // create owner 
         const owner = await hre.ethers.getSigner(0);
         // get the contract
@@ -85,7 +85,7 @@ task("cipher", "Prepare a secret for reveal")
             decipherData.push(await instance.getHiddenValue(i, taskArgs.valuesize));
             assert(decipherData[i] == secret[i], `Deciphered data ${decipherData[i]} does not match the original data ${secret[i]}`);
         }
-        console.log(`${chalk.yellow("Ciphered secret:")}\n${cipherData}`);
+        console.log(`${chalk.yellow("Ciphered value:")}\n${cipherData}`);
         // create filename based on original filename
         
         let filenameSrc = filePath.split(".")[0];
@@ -119,7 +119,7 @@ task("cipher", "Prepare a secret for reveal")
             hidden_value_bytes_size: taskArgs.valuesize,
         }));
         // display the file path 
-        console.log(`\n${chalk.yellow('The secret data has been written into')} ${path.join(__dirname, "output:")}\n
+        console.log(`\n${chalk.yellow('The ciphering data has been written into')} ${path.join(__dirname, "output:")}\n
         ${filenameSrc}_ciphered.txt will contains your ciphered data
         ${filenameSrc}.key will contains the key to use to reveal the ciphered data
         ${filenameSrc}.iv will contains the initial vector to use to reveal the ciphered data

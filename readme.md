@@ -1,6 +1,6 @@
 # Revealable On Chain Secret Scheme
 
-This is a scheme to embed a **secret** in a smart contract that could be revealed by the owner of the contract.
+This is a scheme to embed a **hidden value** in a smart contract that could be revealed by the owner of the contract.
 
 ## Motivation
 
@@ -41,29 +41,29 @@ But on the other hand, can we really blame him for wanting to make a living from
 
 ![Contract Creation](docs/contract_creation.png)
 
-- The owner must prepare his secret and cipher it using a key and a intial vector.
-- The owner must write down the ciphered secret to the smart contract before deployment (this could be done afterwards, but it may be more expensive, it remains to be proven)
+- The owner must prepare his value to hide and cipher it using a key and a intial vector.
+- The owner must write down the ciphered value into the smart contract.
 - The owner must test his smart contract to make sure everything works as expected.
 - The owner must deploy the smart contract.
 
 ![Contract Interaction](docs/contract_interaction.png)
 
 - The collector can mint the smart contract.
-- The collector can call the smart contract but get the ciphered secret.
+- The collector can call the smart contract but get the ciphered value .
 
 ![Reveal Secret](docs/reveal_secret.png)
 
-- The owner can reveal the secret by calling a specific function that will write the key into the smart contract.
-- The collector can call the smart contract and get the revealed secret.
+- The owner can reveal the hidden value by calling a specific function that will write the key into the smart contract.
+- The collector can call the smart contract and get the revealed value.
 
 ### Preparation & contract testing
 
 ![Contract Creation](docs/Contract_creation_SeqDiag.png)
 
 - The owner generates a key and an intial vector.
-- The owner prepares his secret and ciphers it using the key and the intial vector.
+- The owner prepares his value to hide and ciphers it using the key and the intial vector.
 - The owner deploys the smart contract.
-- The owner writes down the ciphered secret to the smart contract.
+- The owner writes down the ciphered value into the smart contract.
 - The owner tests his smart contract to make sure everything works as expected.
 
 ### Reveal
@@ -72,16 +72,16 @@ But on the other hand, can we really blame him for wanting to make a living from
 
 #### Contract usage before reveal
 
-- Anyone can call the smart contract but get ciphered secret.
-- In the diagram above, the collector can mint the smart contract and get the ciphered secret when calling the smart contract.
+- Anyone can call the smart contract but get ciphered value.
+- In the diagram above, the collector can mint the smart contract and get the ciphered value when calling the smart contract.
 
-#### Reveal the secret
+#### Reveal the hidden value
 
-- The owner reveals the secret by calling a specific function that will decrypt the secret using the owner's private key and write the revealed secret into the smart contract.
+- The owner reveals the hidden value by calling a specific function that will decrypt the secret using the owner's private key and write the revealed value into the smart contract.
 
 #### Contract usage after reveal
 
-- once the secret is revealed, anyone can call the smart contract and get to know the secret.
+- once the hidden value is revealed, anyone can call the smart contract and get to know the value.
 
 ## Install & testing
 
@@ -132,10 +132,10 @@ Key: 0xcaa6e3191f88601644b74e72893e1b392583b6a04f71511bcc2a8b7280933604
 IV: 0xe92f5949babb53eb160f01da9321a6e7744a28f4795f38cb5bba1b6b73e1acbe
 Secret to cipher:
 4062,55174,23769,24456,46791,7236,39972,51902,58541,17820
-Ciphered secret:
+Ciphered value:
 766,10105,58665,13202,65495,53002,10655,64327,31668,28695
 
-The secret data has been written into ./output:
+The ciphering data has been written into ./output:
 
         demo_ciphered.txt will contains your ciphered data
         demo.key will contains the key to use to reveal the ciphered data
@@ -150,7 +150,7 @@ You can then deploy the contract and call the `setHiddenValue` method to send th
 
 ### Output files
 
-the `cipher` Hardhat task will output a series of files in a folder named `cipher_output_{filename}`. Path is relative to command execution.
+the `cipher` Hardhat task will output a series of files in a folder named `cipher_output_{filename}`.
 
 - `{filename}_ciphered.txt` will contains your ciphered data
 - `{filename}.key` will contains the key to use to reveal the ciphered data
@@ -159,11 +159,11 @@ the `cipher` Hardhat task will output a series of files in a folder named `ciphe
 
 ```json
 {
-    "original_key": "0xcaa6e3191f88601644b74e72893e1b392583b6a04f71511bcc2a8b7280933604",
-    "original_Iv": "0xe92f5949babb53eb160f01da9321a6e7744a28f4795f38cb5bba1b6b73e1acbe",
+    "original_key": "",
+    "original_Iv": "",
     "key_to_use": "0xcaa6e3191f88601644b74e72893e1b392583b6a04f71511bcc2a8b7280933604",
     "iv_to_use": "0xe92f5949babb53eb160f01da9321a6e7744a28f4795f38cb5bba1b6b73e1acbe",
-    "ciphered_secret_to_use": [
+    "ciphered_value_to_use": [
         766,
         10105,
         58665,
@@ -175,7 +175,7 @@ the `cipher` Hardhat task will output a series of files in a folder named `ciphe
         31668,
         28695
     ],
-    "secret_to_cipher": [
+    "value_to_cipher": [
         4062,
         55174,
         23769,
@@ -194,22 +194,22 @@ the `cipher` Hardhat task will output a series of files in a folder named `ciphe
 ### Cipher task command
 
 ```bash
-npx hardhat cipher --source {path_to_secret_JSON_file} --key {key} --iv {iv} --value {value}
+npx hardhat cipher --source {path_to_value_to_hide_JSON_file} --key {key} --iv {iv} --value {value}
 ```
 
 #### Source
 
-The `--source` parameter is mandatory.
+The `--source` parameter is mandatory. Path is relative to command execution not to the script.
 
 ```bash
---source {path_to_secret_JSON_file} # path to the JSON file containing the secret
+--source {path_to_value_to_hide_JSON_file} # path to the JSON file containing the value to hide
 ```
 
 JSON file must contains
 
 ```json
 {
-  "secret": "my secret"
+  "value": "my value to hide"
 }
 ```
 
@@ -217,19 +217,19 @@ JSON file will optionally contains key and iv
 
 ```json
 {
-  "secret": "my secret",
+  "value": "my value to hide",
   "key": "my key",
   "iv": "my iv"
 }
 ```
 
-If key and iv are provided, they will be used to cipher the secret.
+If key and iv are provided, they will be used to cipher the value to hide.
 
 #### Optional parameters
 
 ```bash
---key {key} # key to cipher the secret
---iv {iv} # iv to cipher the secret
+--key {key} # key to cipher the value to hide
+--iv {iv} # iv to cipher the value to hide
 ```
 
 If no key and iv are provided, they will be generated randomly.
@@ -241,7 +241,7 @@ He defines a list of values where each value will refer to an NFT. This can be a
 
 Collectors will mint on a first come, first served basis. The attribution will be done in the order of minting.
 
-Our secret is an array of 16 bytes.
+Our value to hide is an array of 16 bytes.
 
 ```typescript
     uint16[] private _ids;
@@ -249,7 +249,7 @@ Our secret is an array of 16 bytes.
 
 We started by defining a symmetric encryption function. Here we have taken CTR, but there are other alternatives.
 
-The artist will be able to encrypt his array of values into an array of secret values using the chosen encryption function.
+The artist will be able to encrypt his array of values into an array of ciphered values using the chosen encryption function.
 
 For the example, after performing all the necessary tests, we used *hardhat* and called the locally deployed contract to encrypt the array of values to be hidden.
 
@@ -326,9 +326,9 @@ function getMetadata(
 
 ### Costs
 
-In this scheme, the owner needs to pay for the gas cost of keeping the secret to the smart contract. This is because the secret is stored in the smart contract.
-Keeping the secret in storage will consume more gas because we need to pay for the block space.
-The smaller the secret is, the cheaper it is to keep it in the smart contract.
+In this scheme, the owner needs to pay for the gas cost of keeping the hidden value to the smart contract. This is because the hidden value is stored in the smart contract.
+Keeping the hidden value in storage will consume more gas because we need to pay for the block space.
+The smaller the hidden value is, the cheaper it is to keep it in the smart contract.
 
 ### Hardhat Gas Report
 
