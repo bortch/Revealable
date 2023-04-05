@@ -89,14 +89,11 @@ task("cipher", "Prepare a secret for reveal")
         // create filename based on original filename
         
         let filenameSrc = filePath.split(".")[0];
-        console.log(filenameSrc);
         // sanitize filename
         // remove absolute path
         filenameSrc = filenameSrc.replace(/^.*[\\\/]/, '');
-        console.log(filenameSrc);
         // replace all non-alphanumeric characters with underscore
         filenameSrc = filenameSrc.replace(/[^a-z0-9]/gi, '_').toLowerCase();
-        console.log(filenameSrc);
         // Output response in an "output" directory
         // create output directory if it does not exist
         const outputDir = path.join(currentPath, `cipher_output_${filenameSrc}`);
