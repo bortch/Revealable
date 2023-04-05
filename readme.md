@@ -194,18 +194,22 @@ the `cipher` Hardhat task will output a series of files in a folder named `ciphe
 ### Cipher task command
 
 ```bash
-npx hardhat cipher --source {path_to_value_to_hide_JSON_file} --key {key} --iv {iv} --value {value}
+npx hardhat cipher --source {path_to_value_to_hide_JSON_file} --key {key} --iv {iv} --valuesize {value}
 ```
 
-#### Source
+#### Source of value(s) to hide
 
-The `--source` parameter is mandatory. Path is relative to command execution not to the script.
+The `--source` parameter is mandatory.
+
+Path is relative to command execution not to the script.
 
 ```bash
 --source {path_to_value_to_hide_JSON_file} # path to the JSON file containing the value to hide
 ```
 
-JSON file must contains
+The JSON file containing the value to hide must have a key named `value`.
+
+The value can be a string, a number or an array.
 
 ```json
 {
@@ -213,7 +217,7 @@ JSON file must contains
 }
 ```
 
-JSON file will optionally contains key and iv
+JSON file can optionally contains `key` and `iv` keys.
 
 ```json
 {
@@ -224,8 +228,11 @@ JSON file will optionally contains key and iv
 ```
 
 If key and iv are provided, they will be used to cipher the value to hide.
+Else, they will be generated randomly if not provided through the `--key` and `--iv` parameters.
 
 #### Optional parameters
+
+##### Key and IV
 
 ```bash
 --key {key} # key to cipher the value to hide
@@ -234,7 +241,47 @@ If key and iv are provided, they will be used to cipher the value to hide.
 
 If no key and iv are provided, they will be generated randomly.
 
+##### Value to hide
+
+```bash
+--valuesize {value} # the size in byte of (each) value to hide
+```
+
+By default, the value to hide will be 2 bytes long.
+
 ## Implementation details
+
+### Revealable contract state
+
+![Revealable contract state](./docs/Revealable_2_states.png)
+
+The contract could only be in one of the following states:
+
+- `Hidden`: the value to hide is set but not revealed
+- `Revealed`: the value to hide is revealed
+
+For now, there is no guard if the value to hide has not been set.
+
+Under the hood, there's an internal state named `Revealable`. Its purpose is to reset the keys in case of sending wrong keys.
+
+### Revealable contract state transition
+
+![Revealable contract state transition](./docs/Revealable_states_details.png)
+
+There are 2 ways to reveal the value to hide (path A and path B).
+
+#### Path A
+
+- `setHiddenValue(value_to_hide,valueSize)`: the value to hide is set and the contract is in the `Hidden` state
+- `reveal(keys, valueSize)`: the value to hide is revealed and the contract is in the `Revealed` state
+
+#### Path B
+
+- `setHiddenValue(value_to_hide,valueSize)`: the value to hide is set and the contract is in the `Hidden` state
+- `setRevealKey(keys, valueSize)`: the value to hide is revealed and the contract is in the `Revealable` state
+- `reveal()`: the value to hide is revealed and the contract is in the `Revealed` state
+
+### Implementing the Revealable contract
 
 In our example, the artist randomly defines an order in which the NFTs will be assigned.
 He defines a list of values where each value will refer to an NFT. This can be a serial number, a DNA, an address.
@@ -247,7 +294,7 @@ Our value to hide is an array of 16 bytes.
     uint16[] private _ids;
 ```
 
-We started by defining a symmetric encryption function. Here we have taken CTR, but there are other alternatives.
+We started by defining a bijective encryption function. Here we have taken CTR, but there are other alternatives. bijective means that the encryption function is reversible.
 
 The artist will be able to encrypt his array of values into an array of ciphered values using the chosen encryption function.
 
