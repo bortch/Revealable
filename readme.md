@@ -253,7 +253,7 @@ By default, the value to hide will be 2 bytes long.
 
 ### Revealable contract state
 
-![Revealable contract state](./docs/Revealable_2_states.png)
+![Revealable contract state](./docs/Revealable_state.png)
 
 The contract could only be in one of the following states:
 
@@ -266,7 +266,7 @@ Under the hood, there's an internal state named `Revealable`. Its purpose is to 
 
 ### Revealable contract state transition
 
-![Revealable contract state transition](./docs/Revealable_states_details.png)
+![Revealable contract state transition](./docs/Revealable_state_details.png)
 
 There are 2 ways for the contract owner to reveal the value to hide (path A and path B).
 
