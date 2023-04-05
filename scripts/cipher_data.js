@@ -27,8 +27,14 @@ task("cipher", "Prepare a secret for reveal")
             font: "Poison", horizontalLayout: 'full',
             verticalLayout: 'full'
         })));
+
+        // get file with path relative to the command line
+        // and merge the path with the source's path
+        const currentPath = process.cwd();
+        const filePath = path.join(currentPath, taskArgs.source);
+        assert(fs.existsSync(filePath), chalk.red(`File ${filePath} does not exist, verify the path`));
         // Get the secret from the JSON file
-        const file = JSON.parse(fs.readFileSync(path.join(__dirname, taskArgs.source)));
+        const file = JSON.parse(fs.readFileSync(filePath, 'utf8'));
         // generate key and iv
         let key;
         let iv;
@@ -81,22 +87,32 @@ task("cipher", "Prepare a secret for reveal")
         }
         console.log(`${chalk.yellow("Ciphered secret:")}\n${cipherData}`);
         // create filename based on original filename
-        const filenameSrc = taskArgs.source.split(".")[0];
+        
+        let filenameSrc = filePath.split(".")[0];
+        console.log(filenameSrc);
+        // sanitize filename
+        // remove absolute path
+        filenameSrc = filenameSrc.replace(/^.*[\\\/]/, '');
+        console.log(filenameSrc);
+        // replace all non-alphanumeric characters with underscore
+        filenameSrc = filenameSrc.replace(/[^a-z0-9]/gi, '_').toLowerCase();
+        console.log(filenameSrc);
         // Output response in an "output" directory
         // create output directory if it does not exist
-        if (!fs.existsSync(path.join(__dirname, "output"))) {
-            fs.mkdirSync(path.join(__dirname, "output"));
+        const outputDir = path.join(currentPath, `cipher_output_${filenameSrc}`);
+        if (!fs.existsSync(outputDir)) {
+            fs.mkdirSync(outputDir);
         }
         // create a file text for ciphered data
-        fs.writeFileSync(path.join(__dirname, "output", `${filenameSrc}_ciphered.txt`), JSON.stringify(cipherData));
+        fs.writeFileSync(path.join(outputDir, `${filenameSrc}_ciphered.txt`), JSON.stringify(cipherData));
         // create a file .key for key
-        fs.writeFileSync(path.join(__dirname, "output", `${filenameSrc}.key`), key);
+        fs.writeFileSync(path.join(outputDir, `${filenameSrc}.key`), key);
         // create a file .iv for iv
-        fs.writeFileSync(path.join(__dirname, "output", `${filenameSrc}.iv`), iv);
+        fs.writeFileSync(path.join(outputDir, `${filenameSrc}.iv`), iv);
         
         // write the data to a file
         const filenameReport = `${filenameSrc}_report.json`;
-        fs.writeFileSync(path.join(__dirname,"output", filenameReport), JSON.stringify({
+        fs.writeFileSync(path.join(outputDir, filenameReport), JSON.stringify({
             original_key: file.key,
             original_Iv: file.iv,
             key_to_use: key,
