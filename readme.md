@@ -268,7 +268,7 @@ Under the hood, there's an internal state named `Revealable`. Its purpose is to 
 
 ![Revealable contract state transition](./docs/Revealable_states_details.png)
 
-There are 2 ways to reveal the value to hide (path A and path B).
+There are 2 ways for the contract owner to reveal the value to hide (path A and path B).
 
 #### Path A
 
