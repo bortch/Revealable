@@ -112,7 +112,7 @@ npx hardhat test
 
 ## Ciphering the data
 
-### Example
+### Using Cipher script
 
 ```terminal
 $ npx hardhat cipher --source demo.json
@@ -146,39 +146,55 @@ The secret data has been written into ./output:
 
 ```
 
-You can then paste the generated Ciphered data into the smart contract.
+You can then deploy the contract and call the `setHiddenValue` method to send the generated Ciphered data into the smart contract.
 
-```ts
- uint16[] internal _hiddenValue= [0x2c99,0xf4c1,0x7f9e,0x7ccf,0x9580,0x3f03,0xbf63,0xe9f9,0xc7ea,0x66db];
-```
+### Output files
 
-### JSON Output file
+the `cipher` Hardhat task will output a series of files in a folder named `cipher_output_{filename}`. Path is relative to command execution.
 
-the `prepare-secret` task will output a json containing the following:
+- `{filename}_ciphered.txt` will contains your ciphered data
+- `{filename}.key` will contains the key to use to reveal the ciphered data
+- `{filename}.iv` will contains the initial vector to use to reveal the ciphered data
+- `{filename}_report.json` will contains all the previous data json
 
-```bash
+```json
 {
-    "key": "0xcaa6e3191f88601644b74e72893e1b392583b6a04f71511bcc2a8b7280933604",
-    "iv": "0xe92f5949babb53eb160f01da9321a6e7744a28f4795f38cb5bba1b6b73e1acbe",
-    "cipherData": [
-        "0x2c99",
-        "0xf4c1",
-        "0x7f9e",
-        "0x7ccf",
-        "0x9580",
-        "0x3f03",
-        "0xbf63",
-        "0xe9f9",
-        "0xc7ea",
-        "0x66db"
-    ]
+    "original_key": "0xcaa6e3191f88601644b74e72893e1b392583b6a04f71511bcc2a8b7280933604",
+    "original_Iv": "0xe92f5949babb53eb160f01da9321a6e7744a28f4795f38cb5bba1b6b73e1acbe",
+    "key_to_use": "0xcaa6e3191f88601644b74e72893e1b392583b6a04f71511bcc2a8b7280933604",
+    "iv_to_use": "0xe92f5949babb53eb160f01da9321a6e7744a28f4795f38cb5bba1b6b73e1acbe",
+    "ciphered_secret_to_use": [
+        766,
+        10105,
+        58665,
+        13202,
+        65495,
+        53002,
+        10655,
+        64327,
+        31668,
+        28695
+    ],
+    "secret_to_cipher": [
+        4062,
+        55174,
+        23769,
+        24456,
+        46791,
+        7236,
+        39972,
+        51902,
+        58541,
+        17820
+    ],
+    "hidden_value_bytes_size": 2
 }
 ```
 
-### Command
+### Cipher task command
 
 ```bash
-npx hardhat prepare-secret --source {path_to_secret_JSON_file} --key {key} --iv {iv}
+npx hardhat cipher --source {path_to_secret_JSON_file} --key {key} --iv {iv} --value {value}
 ```
 
 #### Source
