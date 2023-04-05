@@ -5,11 +5,6 @@ const path = require('path');
 const figlet = require('figlet');
 const chalk = require('chalk');
 
-// check if hex or string
-function isHex(str) {
-    return /[0-9A-Fa-f]{6}/g.test(str);
-}
-
 //convert input if hex or string
 function convertStringToBytes(input) {
     if (hre.ethers.utils.isHexString(input)) {
@@ -22,7 +17,7 @@ function convertStringToBytes(input) {
     }
 }
 
-task("prepare-secret", "Prepare a secret for reveal")
+task("cipher", "Prepare a secret for reveal")
     .addParam("source", "The source of the secret")
     .addOptionalParam("valuesize", "The size of each value to be revealed", 2, types.int)
     .addOptionalParam('key', 'The key to cipher the secret')
@@ -64,10 +59,8 @@ task("prepare-secret", "Prepare a secret for reveal")
         const instance = await contract.deploy();
         // set the data to be ciphered
         await instance.setHiddenValues(secret, taskArgs.valuesize);
-        //  set key and iv
-        await instance.setRevealKey(key, iv);
         // prepare the secret
-        await instance.reveal();
+        await instance["reveal(bytes32,bytes32)"](key, iv);
         const cipherData = [];
         for (let i = 0; i < secret.length; i++) {
             const cipher = await instance.getHiddenValue(i, taskArgs.valuesize);
@@ -79,9 +72,8 @@ task("prepare-secret", "Prepare a secret for reveal")
         // set the data to be deciphered
         const decipherData = [];
         await instance.setHiddenValues(cipherData, taskArgs.valuesize);
-        await instance.setRevealKey(key, iv);
-        // prepare the secret
-        await instance.reveal();
+        // reveal the secret
+        await instance["reveal(bytes32,bytes32)"](key, iv);
         // decipher the data to check if it matches the original data
         for (let i = 0; i < cipherData.length; i++) {
             decipherData.push(await instance.getHiddenValue(i, taskArgs.valuesize));
@@ -96,7 +88,7 @@ task("prepare-secret", "Prepare a secret for reveal")
             fs.mkdirSync(path.join(__dirname, "output"));
         }
         // create a file text for ciphered data
-        fs.writeFileSync(path.join(__dirname, "output", `ciphered_${filenameSrc}.txt`), JSON.stringify(cipherData));
+        fs.writeFileSync(path.join(__dirname, "output", `${filenameSrc}_ciphered.txt`), JSON.stringify(cipherData));
         // create a file .key for key
         fs.writeFileSync(path.join(__dirname, "output", `${filenameSrc}.key`), key);
         // create a file .iv for iv
@@ -114,5 +106,10 @@ task("prepare-secret", "Prepare a secret for reveal")
             hidden_value_bytes_size: taskArgs.valuesize,
         }));
         // display the file path 
-        console.log(`\n${chalk.yellow('The secret data has been written to')} ${path.join(__dirname, "output")}\n${chalk.blue('keep it safe!')}`);
+        console.log(`\n${chalk.yellow('The secret data has been written into')} ${path.join(__dirname, "output:")}\n
+        ${filenameSrc}_ciphered.txt will contains your ciphered data
+        ${filenameSrc}.key will contains the key to use to reveal the ciphered data
+        ${filenameSrc}.iv will contains the initial vector to use to reveal the ciphered data
+        ${filenameSrc}_report.json will contains all the previous data\n
+        ${chalk.blue('keep them safe!\n')}`);
     });
