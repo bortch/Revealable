@@ -41,7 +41,7 @@ But on the other hand, can we really blame him for wanting to make a living from
 
 ![Contract Creation](docs/contract_creation.png)
 
-- The owner must prepare his secret and cipher it using a key and a nonce.
+- The owner must prepare his secret and cipher it using a key and a intial vector.
 - The owner must write down the ciphered secret to the smart contract before deployment (this could be done afterwards, but it may be more expensive, it remains to be proven)
 - The owner must test his smart contract to make sure everything works as expected.
 - The owner must deploy the smart contract.
@@ -56,15 +56,15 @@ But on the other hand, can we really blame him for wanting to make a living from
 - The owner can reveal the secret by calling a specific function that will write the key into the smart contract.
 - The collector can call the smart contract and get the revealed secret.
 
-### Preparation & contract creation
+### Preparation & contract testing
 
 ![Contract Creation](docs/Contract_creation_SeqDiag.png)
 
-- The owner generates a key and a nonce.
-- The owner prepares his secret and cipher it using the key and the nonce.
-- The owner writes down the ciphered secret to the smart contract before deployment.
-- The owner tests his smart contract to make sure everything works as expected.
+- The owner generates a key and an intial vector.
+- The owner prepares his secret and ciphers it using the key and the intial vector.
 - The owner deploys the smart contract.
+- The owner writes down the ciphered secret to the smart contract.
+- The owner tests his smart contract to make sure everything works as expected.
 
 ### Reveal
 
@@ -73,13 +73,9 @@ But on the other hand, can we really blame him for wanting to make a living from
 #### Contract usage before reveal
 
 - Anyone can call the smart contract but get ciphered secret.
+- In the diagram above, the collector can mint the smart contract and get the ciphered secret when calling the smart contract.
 
-#### Reveal: option 1
-
-- The owner reveals the secret by calling a specific function that will write the key into the smart contract.
-- when the key is written, anyone can call the smart contract and get the secret.
-
-#### Reveal: option 2
+#### Reveal the secret
 
 - The owner reveals the secret by calling a specific function that will decrypt the secret using the owner's private key and write the revealed secret into the smart contract.
 
@@ -119,8 +115,8 @@ npx hardhat test
 ### Example
 
 ```terminal
-$ npx hardhat prepare-secret --source test_2.json
-
+$ npx hardhat prepare-secret --source demo.json
+                                                                                                                                                                                                
 @@@@@@@   @@@@@@@@  @@@  @@@  @@@@@@@@   @@@@@@   @@@        @@@@@@   @@@@@@@   @@@       @@@@@@@@  
 @@@@@@@@  @@@@@@@@  @@@  @@@  @@@@@@@@  @@@@@@@@  @@@       @@@@@@@@  @@@@@@@@  @@@       @@@@@@@@  
 @@!  @@@  @@!       @@!  @@@  @@!       @@!  @@@  @@!       @@!  @@@  @@!  @@@  @@!       @@!       
@@ -136,10 +132,18 @@ Key: 0xcaa6e3191f88601644b74e72893e1b392583b6a04f71511bcc2a8b7280933604
 IV: 0xe92f5949babb53eb160f01da9321a6e7744a28f4795f38cb5bba1b6b73e1acbe
 Secret to cipher:
 4062,55174,23769,24456,46791,7236,39972,51902,58541,17820
-Ciphered data:
-0x2c99,0xf4c1,0x7f9e,0x7ccf,0x9580,0x3f03,0xbf63,0xe9f9,0xc7ea,0x66db
+Ciphered secret:
+766,10105,58665,13202,65495,53002,10655,64327,31668,28695
 
-The secret data has been written to ./secret_test_2.json
+The secret data has been written into ./output:
+
+        demo_ciphered.txt will contains your ciphered data
+        demo.key will contains the key to use to reveal the ciphered data
+        demo.iv will contains the initial vector to use to reveal the ciphered data
+        demo_report.json will contains all the previous data
+
+        keep them safe!
+
 ```
 
 You can then paste the generated Ciphered data into the smart contract.

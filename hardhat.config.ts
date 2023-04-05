@@ -5,7 +5,7 @@ import type { HardhatUserConfig } from "hardhat/config";
 
 import "dotenv/config";
 
-require("./scripts/prepare_secret.js");
+require("./scripts/cipher_data.js");
 
 // You need to export an object to set up your config
 // Go to https://hardhat.org/config/ to learn more
