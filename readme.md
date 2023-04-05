@@ -110,12 +110,12 @@ npx hardhat test
 
 - Dive in the code `;)`
 
-## Preparing the secret
+## Ciphering the data
 
 ### Example
 
 ```terminal
-$ npx hardhat prepare-secret --source demo.json
+$ npx hardhat cipher --source demo.json
                                                                                                                                                                                                 
 @@@@@@@   @@@@@@@@  @@@  @@@  @@@@@@@@   @@@@@@   @@@        @@@@@@   @@@@@@@   @@@       @@@@@@@@  
 @@@@@@@@  @@@@@@@@  @@@  @@@  @@@@@@@@  @@@@@@@@  @@@       @@@@@@@@  @@@@@@@@  @@@       @@@@@@@@  
