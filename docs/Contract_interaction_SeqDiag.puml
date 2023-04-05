@@ -4,26 +4,36 @@
 actor       Owner                       as o
 actor       Collector                   as c
 entity      "Contract\n<<deployed>>"    as contract
-entity      "Blockchain\n<<EVM>>"         as net
 
 == Contract interaction ==
-c -> contract : call mint()
+c -> contract : calls mint()
 activate contract
-contract ->o net : write transaction\n(address, tokenID)
+contract -> contract : writes transaction\n(address, tokenID)
+activate contract
 deactivate contract
-c -> contract : call tokenURI(tokenID)
-activate contract
-contract --> c : return ciphered metadata
+contract --> c : emits event
 deactivate contract
 
-== Secret revelation ==
-o -> contract : call setReveal(key,nonce)
+c -> contract : calls tokenURI(tokenID)
 activate contract
-contract ->o net : update private\nfields _key & _nonce
+contract --> c : returns ciphered data
 deactivate contract
-c -> contract : call tokenURI(tokenID)
+
+== Reveal ==
+o -> contract : calls reveal(key,initialVector)
 activate contract
-contract --> c : return decrypted metadata
+contract -> contract : updates private\nfields _key & _initialVector
+activate contract
+deactivate contract
+contract -> contract : deciphers inplace
+'deactivate contract
+activate contract
+deactivate contract
+contract --> o : emits event
+deactivate contract
+c -> contract : calls tokenURI(tokenID)
+activate contract
+contract --> c : returns deciphered data
 deactivate contract
 
 @enduml

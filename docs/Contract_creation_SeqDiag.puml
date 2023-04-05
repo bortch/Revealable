@@ -3,27 +3,38 @@
 'autonumber
 actor       Owner           as o
 control     "Cipher\n<<script>>"   as cipher
-entity      "Contract\n<<undeployed>>"       as contract
+entity      "Network\n "         as net
 entity      "Contract\n<<deployed>>"       as d_contract
-entity      "Network\n<<blockchain>>"         as net
 
-== Contract creation ==
-o -> o : generate\nkey & initial vector
-o -> cipher : encrypt(key, nonce, the_message)
+== Secret creation ==
+o -> o : generates key & initial vector
+o -> cipher : calls cipher(key, nonce, the_message)
 activate cipher
-cipher --> o : encrypted_message
+cipher --> o : returns ciphered_message
 deactivate cipher
-o ->o contract : test contract
 
-== Contract deployment ==
-
-o -> net : deploy contract
+== Contract testing example ==
+o-> net: deploys contract
 activate net
-net --> o : contract address
+net -> d_contract : stores contract
+d_contract -> net : gets contract address
+net --> o : returns contract address
 deactivate net
-
-== Contract hide ==
-
-o ->o d_contract : write encrypted_message\nin the contract
+o -> d_contract : calls setHiddenValue(ciphered_message)
+activate d_contract
+d_contract --> o : emits event
+deactivate d_contract
+o -> d_contract : calls getHiddenValue(index)
+activate d_contract
+d_contract --> o : returns the hidden value
+deactivate d_contract
+o-> d_contract: calls reveal(key, initial_vector)
+activate d_contract
+d_contract --> o : emits event
+deactivate d_contract
+o -> d_contract : calls getHiddenValue(index)
+activate d_contract
+d_contract --> o : returns deciphered value
+deactivate d_contract
 
 @enduml
