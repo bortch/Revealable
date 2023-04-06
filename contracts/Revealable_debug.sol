@@ -13,6 +13,7 @@ import "hardhat/console.sol";
 contract Revealable_debug {
 
     enum RevealState {
+        Unset,
         Hidden,
         Revealed,
         Revealable
@@ -38,10 +39,8 @@ contract Revealable_debug {
     }
 
     address private _owner;
-    RevealState internal _revealState = RevealState.Hidden;
-    // Array of value to hide and reveal
-    // hardcode or set via call to setHiddenValues()
-    bytes internal _hiddenValues; // = [/*hardcode here*/];
+    RevealState internal _revealState = RevealState.Unset;
+    bytes internal _hiddenValues;
     bytes32 internal _key = bytes32(0);
     bytes32 internal _initialVector = bytes32(0);
 
@@ -52,6 +51,7 @@ contract Revealable_debug {
         bytes hiddenValues
     );
     event HiddenValuesSet(address indexed hider, uint256[] hiddenValues);
+    event HiddenValuesSetAsBytes(address indexed hider, bytes hiddenValues);
     event ResetKey(
         address indexed resetter,
         bytes32 indexed key,
@@ -67,6 +67,9 @@ contract Revealable_debug {
         console.log("Revealable::constructor ends\n]\n");
     }
 
+    /**
+     * @notice Owner can reveal the hidden values
+     */
     function reveal() public _ownerOnly hasState(RevealState.Revealable) {
         console.log("\n[\nRevealable::reveal called");
         console.log("Revealable::reveal _hiddenValues (before):");
@@ -142,8 +145,30 @@ contract Revealable_debug {
     }
 
     /**
+     * @notice Owner can set the hidden values as bytes
+     * @param values a bytes array of hidden values
+     */
+    function setHiddenValues(bytes memory values) public _ownerOnly{
+        console.log("\n[\nRevealable::setHiddenValues(bytes) called");
+        _hiddenValues = values;
+        console.log("Revealable::setHiddenValues(bytes) _hiddenValues:");
+        console.logBytes(_hiddenValues);
+        _revealState = RevealState.Hidden;
+        emit HiddenValuesSetAsBytes(msg.sender, values);
+    }
+
+    /**
+     * @notice get the hidden values as bytes
+     * @return bytes the hidden values
+     */
+    function getHiddenValues() public view returns (bytes memory) {
+        return _hiddenValues;
+    }
+
+    /**
      * @notice returns the nth hidden value as 256 bits
      * @param index the nth hidden value
+     * @param valueSize the size of the hidden value in bytes
      * @return uint256 the hidden value as uint256
      */
     function getHiddenValue(
@@ -205,6 +230,11 @@ contract Revealable_debug {
         _revealState = RevealState.Revealable;
     }
 
+    /**
+     * @notice Owner can reset the key to reveal the hidden values
+     * @param key the new key to reveal the hidden values
+     * @param initialVector the new initialVector to reveal the hidden values
+     */
     function resetRevealKey(
         bytes32 key,
         bytes32 initialVector
@@ -216,6 +246,9 @@ contract Revealable_debug {
         console.log("Revealable::resetRevealKey _key:");
     }
 
+    /**
+     * @notice Owner can reset the revealation of the hidden values
+     */
     function resetReveal() public _ownerOnly hasState(RevealState.Revealed){
         console.log("\n[\nRevealable::resetReveal called");
         console.log("Revealable::resetReveal _hiddenValues (before):");
