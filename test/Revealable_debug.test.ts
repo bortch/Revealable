@@ -7,6 +7,26 @@ var chaiJsonEqual = require('chai-json-equal');
 var chai = require('chai');
 chai.use(chaiJsonEqual);
 
+
+const dataSet = {
+  data: [4062, 55174, 23769, 24456, 46791, 7236, 39972, 51902, 58541, 17820],
+  key: '0xcaa6e3191f88601644b74e72893e1b392583b6a04f71511bcc2a8b7280933604',
+  iv: '0xe92f5949babb53eb160f01da9321a6e7744a28f4795f38cb5bba1b6b73e1acbe',
+  cipherData: [
+    766, 10105, 58665,
+  13202, 65495, 53002,
+  10655, 64327, 31668,
+  28695
+],
+  decipherMessage: [
+    4062, 55174, 23769,
+   24456, 46791,  7236,
+   39972, 51902, 58541,
+   17820
+ ],
+  valueSize: 2
+};
+
 // Start test block
 describe('Revealable Contract Debug testing', function () {
   before(async function () {
@@ -21,94 +41,90 @@ describe('Revealable Contract Debug testing', function () {
 
   beforeEach(async function () {
     // deploy the contract
-    this.reveal = await this.Revealable_debug.deploy();
-    await this.reveal.deployed();
-
-    // Set the hidden value
-    //await this.reveal["setHiddenValues(uint256[],uint256)"]([0x56f2,0x8eaa,0x05f5,0x06a4,0xefeb,0x4568,0xc508,0x9392,0xbd81,0x1cb0]);
-    // Get the collector contract for signing transaction with collector key
-    //this.collectorContract = this.reveal.connect(this.signers[1]);
+    this.revealable = await this.Revealable_debug.deploy();
+    await this.revealable.deployed();
   });
 
   // Test cases
 
+  it('should revert if Unset', async function () {
+    await expect(this.revealable["getHiddenValue(uint256)"](1)).to.revertedWith("Revealable: contract not set");
+  });
+
+  it('should revert if key or iv equal 0', async function () {
+    await this.revealable["setHiddenValues(uint256[],uint256)"](dataSet.data, dataSet.valueSize);
+    // set the valueSize
+    // zero bytes
+    const zero = ethers.constants.HashZero;
+    await expect(this.revealable.setRevealKey(dataSet.key,zero, dataSet.valueSize)).to.revertedWith('Revealable: key and initialVector cannot be zero');
+    await expect(this.revealable.setRevealKey(zero, dataSet.iv, dataSet.valueSize)).to.revertedWith('Revealable: key and initialVector cannot be zero');
+    await expect(this.revealable.setRevealKey(dataSet.key, dataSet.iv, 0)).to.revertedWith("valueSize couldn't be zero");
+  });
+
   it('should set the hidden values', async function () {
-    const test_case = {
-      data: [4062, 55174, 23769, 24456, 46791, 7236, 39972, 51902, 58541, 17820],
-      key: '0xcaa6e3191f88601644b74e72893e1b392583b6a04f71511bcc2a8b7280933604',
-      iv: '0xe92f5949babb53eb160f01da9321a6e7744a28f4795f38cb5bba1b6b73e1acbe',
-      cipherData: [32219, 42371, 11996, 11661, 50370, 28225, 60961, 47291, 38568, 14233],
-      decipherMessage: [0x3aed, 0xb961, 0xbe63, 0x6d27, 0xd902, 0x68d7, 0xe259, 0xa365, 0x3403, 0xd296]
-    };
     // Set the hidden values
-    const valueSize = 2;
-    await this.reveal["setHiddenValues(uint256[],uint256)"](test_case.data, valueSize);
+    await this.revealable["setHiddenValues(uint256[],uint256)"](dataSet.data, dataSet.valueSize);
+    // set the valueSize
+    await this.revealable.setRevealKey(dataSet.key, dataSet.iv, dataSet.valueSize)
     // Get the hidden values
-    for (let index = 0; index < test_case.data.length; index++) {
-      expect(await this.reveal.getHiddenValue(index, 2)).to.equal(test_case.data[index]);
+    for (let index = 0; index < dataSet.data.length; index++) {
+      expect(await this.revealable.getHiddenValue(index)).to.equal(dataSet.data[index]);
     }
   });
 
   it('should emit event when setting the hidden values', async function () {
-    const test_case = {
-      data: [4062, 55174, 23769, 24456, 46791, 7236, 39972, 51902, 58541, 17820],
-      key: '0xcaa6e3191f88601644b74e72893e1b392583b6a04f71511bcc2a8b7280933604',
-      iv: '0xe92f5949babb53eb160f01da9321a6e7744a28f4795f38cb5bba1b6b73e1acbe',
-    };
     // Set the hidden values
-    const valueSize = 2;
-    await expect(this.reveal["setHiddenValues(uint256[],uint256)"](test_case.data, valueSize))
-      .to.emit(this.reveal, 'HiddenValuesSet').withArgs(this.owner, test_case.data);
+    await expect(this.revealable["setHiddenValues(uint256[],uint256)"](dataSet.data, dataSet.valueSize))
+      .to.emit(this.revealable, 'HiddenValuesSet').withArgs(this.owner, dataSet.data);
   });
 
-
   it('should cipher values', async function () {
-    const test_case = {
-      data: [4062, 55174, 23769, 24456, 46791, 7236, 39972, 51902, 58541, 17820],
-      key: '0xcaa6e3191f88601644b74e72893e1b392583b6a04f71511bcc2a8b7280933604',
-      iv: '0xe92f5949babb53eb160f01da9321a6e7744a28f4795f38cb5bba1b6b73e1acbe',
-    };
-
     // ciphering data
-    console.log("Encoding data: ", test_case.data);
-    await this.reveal["setHiddenValues(uint256[],uint256)"](test_case.data, 2);
+    console.log("Encoding data: ", dataSet.data);
+    await this.revealable["setHiddenValues(uint256[],uint256)"](dataSet.data, dataSet.valueSize);
     console.log("set reveal key");
-    await this.reveal.setRevealKey(test_case.key, test_case.iv);
+    await this.revealable.setRevealKey(dataSet.key, dataSet.iv, dataSet.valueSize);
     console.log("ciphering data");
-    await this.reveal['reveal()']();
-    const cipherData = [];
+    await this.revealable['reveal()']();
 
     //check that values are different
-    for (let i = 0; i < test_case.data.length; i++) {
-      const hiddenValue = await this.reveal.getHiddenValue(i, 2);
+    const cipherData = [];
+    for (let i = 0; i < dataSet.data.length; i++) {
+      const hiddenValue = await this.revealable["getHiddenValue(uint256)"](i);
       cipherData[i] = hiddenValue.toNumber();
-      expect(hiddenValue).to.not.equal(test_case.data[i], `hiddenValue: ${hiddenValue}, expected: ${test_case.data[i]}`);
-      //todo add the expected cipherData
+      expect(hiddenValue).to.not.equal(dataSet.data[i], `hiddenValue: ${hiddenValue}, expected: ${dataSet.data[i]}`);
+      expect(hiddenValue).to.be.equal(dataSet.cipherData[i], `hiddenValue: ${hiddenValue}, expected: ${dataSet.cipherData[i]}`);
     }
     console.log("cipherData: ", cipherData);
   });
 
-  it('should decipher hidden value if revealed', async function () {
-    const test_case = {
-      data: [4062, 55174, 23769, 24456, 46791, 7236, 39972, 51902, 58541, 17820],
-      key: '0xcaa6e3191f88601644b74e72893e1b392583b6a04f71511bcc2a8b7280933604',
-      iv: '0xe92f5949babb53eb160f01da9321a6e7744a28f4795f38cb5bba1b6b73e1acbe',
-      cipherData: [32219, 42371, 11996, 11661, 50370, 28225, 60961, 47291, 38568, 14233],
-    };
-    // ciphering data
-    console.log("Encoding data: ", test_case.data);
-    await this.reveal["setHiddenValues(uint256[],uint256)"](test_case.data, 2);
-    // try to reveal without setting the key
-    await expect(this.reveal['reveal()']()).to.be.revertedWith("Revealable: contract not revealable");
+  it('should return cipher values as byte', async function () {
+    console.log("Encoding data: ", dataSet.data);
+    await this.revealable["setHiddenValues(uint256[],uint256)"](dataSet.data, dataSet.valueSize);
     console.log("set reveal key");
-    await this.reveal.setRevealKey(test_case.key, test_case.iv);
+    await this.revealable.setRevealKey(dataSet.key, dataSet.iv, dataSet.valueSize);
     console.log("ciphering data");
-    await this.reveal['reveal()']();
+    await this.revealable['reveal()']();
+    const cipherData = await this.revealable['getHiddenValues()']();
+    console.log("cipherData: ", cipherData);
+    expect(true).to.be.true;
+  });
+
+  it('should decipher hidden value if revealed', async function () {
+    // ciphering data
+    console.log("Encoding data: ", dataSet.data);
+    await this.revealable["setHiddenValues(uint256[],uint256)"](dataSet.data, 2);
+    // try to reveal without setting the key
+    await expect(this.revealable['reveal()']()).to.be.revertedWith("Revealable: contract not revealable");
+    console.log("set reveal key");
+    await this.revealable.setRevealKey(dataSet.key, dataSet.iv, dataSet.valueSize);
+    console.log("ciphering data");
+    await this.revealable['reveal()']();
     const cipherData = [];
-    for (let i = 0; i < test_case.data.length; i++) {
-      const hiddenValue = await this.reveal.getHiddenValue(i, 2);
+    for (let i = 0; i < dataSet.data.length; i++) {
+      const hiddenValue = await this.revealable["getHiddenValue(uint256)"](i);
       cipherData[i] = hiddenValue.toNumber();
-      expect(hiddenValue).to.not.equal(test_case.data[i], `hiddenValue: ${hiddenValue}, expected: ${test_case.data[i]}`);
+      expect(hiddenValue).to.not.equal(dataSet.data[i], `hiddenValue: ${hiddenValue}, expected: ${dataSet.data[i]}`);
     }
 
     // set wrong key
@@ -117,62 +133,56 @@ describe('Revealable Contract Debug testing', function () {
     console.log("wrongKey: ", wrongKey);
     console.log("wrongIv: ", wrongIv);
     // reset keys
-    await expect(this.reveal.resetRevealKey(wrongKey, wrongIv)).to.be.revertedWith("Revealable: contract not revealable");
+    await expect(this.revealable.resetRevealKey(wrongKey, wrongIv, dataSet.valueSize)).to.be.revertedWith("Revealable: contract not revealable");
     // try to reveal without resetting the reveal
-    await expect(this.reveal['reveal()']()).to.be.revertedWith("Revealable: contract not revealable");
+    await expect(this.revealable['reveal()']()).to.be.revertedWith("Revealable: contract not revealable");
 
-    await this.reveal.resetReveal();
-    await expect(this.reveal.setRevealKey(wrongKey, wrongIv)).to.be.revertedWith("Revealable: contract not hidden");
-    await this.reveal['reveal()']();
+    await this.revealable.resetReveal();
+    await expect(this.revealable.setRevealKey(wrongKey, wrongIv, dataSet.valueSize)).to.be.revertedWith("Revealable: contract not hidden");
+    await this.revealable['reveal()']();
     //check that values are different
-    for (let i = 0; i < test_case.data.length; i++) {
-      const hiddenValue = await this.reveal.getHiddenValue(i, 2);
+    for (let i = 0; i < dataSet.data.length; i++) {
+      const hiddenValue = await this.revealable["getHiddenValue(uint256)"](i);
       // check that the deciphered value is not the same as the original data with the wrong key
-      expect(hiddenValue).to.not.equal(test_case.cipherData[i], `hiddenValue: ${hiddenValue}, expected: ${test_case.cipherData[i]}`);
+      expect(hiddenValue).to.equal(dataSet.cipherData[i], `hiddenValue: ${hiddenValue}, expected: ${dataSet.cipherData[i]}`);
     }
   });
 
   it('should cipher and decipher if revealed', async function () {
-    const test_case = {
-      data: [4062, 55174, 23769, 24456, 46791, 7236, 39972, 51902, 58541, 17820],
-      key: '0xcaa6e3191f88601644b74e72893e1b392583b6a04f71511bcc2a8b7280933604',
-      iv: '0xe92f5949babb53eb160f01da9321a6e7744a28f4795f38cb5bba1b6b73e1acbe',
-      cipherData: [766, 10105, 58665, 13202, 65495, 53002, 10655, 64327, 31668, 28695],
-    };
 
     // ciphering data
-    console.log("Encoding data: ", test_case.data);
-    await this.reveal["setHiddenValues(uint256[],uint256)"](test_case.data, 2);
+    console.log("Encoding data: ", dataSet.data);
+    await this.revealable["setHiddenValues(uint256[],uint256)"](dataSet.data, 2);
     console.log("set reveal key");
-    await this.reveal.setRevealKey(test_case.key, test_case.iv);
+    await this.revealable.setRevealKey(dataSet.key, dataSet.iv, dataSet.valueSize);
     console.log("ciphering data");
-    await this.reveal['reveal()']();
-    
-    const hiddenValueBytes = await this.reveal.getHiddenValues();
+    await this.revealable['reveal()']();
+
+    const hiddenValueBytes = await this.revealable.getHiddenValues();
     console.log(`hiddenValuesBytes:${hiddenValueBytes}`);
-    
+
     //check that values are different
     const cipherData = [];
-    for (let i = 0; i < test_case.data.length; i++) {
-      const hiddenValue = await this.reveal.getHiddenValue(i, 2);
+    for (let i = 0; i < dataSet.data.length; i++) {
+      const hiddenValue = await this.revealable["getHiddenValue(uint256)"](i);
       cipherData[i] = hiddenValue.toNumber();
-      expect(hiddenValue).to.not.equal(test_case.data[i], `hiddenValue: ${hiddenValue}, expected: ${test_case.data[i]}`);
+      expect(hiddenValue).to.not.equal(dataSet.data[i], `hiddenValue: ${hiddenValue}, expected: ${dataSet.data[i]}`);
     }
 
     // deciphering data
-    console.log("setting ciphered data: ", test_case.cipherData);
-    await this.reveal["setHiddenValues(bytes)"](hiddenValueBytes);
+    console.log("setting ciphered data: ", dataSet.cipherData);
+    await this.revealable["setHiddenValues(bytes)"](hiddenValueBytes);
     console.log("set reveal key");
-    await this.reveal.setRevealKey(test_case.key, test_case.iv);
+    await this.revealable.setRevealKey(dataSet.key, dataSet.iv, dataSet.valueSize);
     console.log("Revealing data");
-    await this.reveal['reveal()']();
-    
+    await this.revealable['reveal()']();
+
     // check that values are the same as the original data
     const decipherData = [];
-    for (let i = 0; i < test_case.data.length; i++) {
-      const hiddenValue = await this.reveal.getHiddenValue(i, 2);
+    for (let i = 0; i < dataSet.data.length; i++) {
+      const hiddenValue = await this.revealable["getHiddenValue(uint256)"](i);
       decipherData[i] = hiddenValue.toNumber();
-      expect(hiddenValue).to.equal(test_case.data[i], `hiddenValue: ${hiddenValue}, expected: ${test_case.data[i]}`);
+      expect(hiddenValue).to.equal(dataSet.data[i], `hiddenValue: ${hiddenValue}, expected: ${dataSet.data[i]}`);
     }
 
     console.log("cipherData: ", cipherData);

@@ -53,7 +53,7 @@ contract Reveal_debug is ERC721, Revealable_debug {
             // require to be minted
             require(_exists(tokenId), "Reveal: token not minted");
             console.log("Reveal::getMetadata _tokenId:");
-            displayId = getHiddenValue(tokenId,2);
+            displayId = getHiddenValue(tokenId);
             console.log("Reveal::getMetadata displayId: %s", displayId);
         }       
         return
@@ -98,7 +98,7 @@ contract Reveal_debug is ERC721, Revealable_debug {
      */
     function getSecretForTokenId(uint256 tokenId) public view returns (uint256) {
         console.log("\nReveal::getSecretForTokenId called with index: %s", tokenId);
-        return getHiddenValue(tokenId,2);
+        return getHiddenValue(tokenId);
     }
 
 }

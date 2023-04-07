@@ -38,11 +38,17 @@ contract Revealable_debug {
         _;
     }
 
+    modifier hasBeenSet(){
+        require(_revealState!=RevealState.Unset,'Revealable: contract not set');
+        _;
+    }
+
     address private _owner;
     RevealState internal _revealState = RevealState.Unset;
     bytes internal _hiddenValues;
     bytes32 internal _key = bytes32(0);
     bytes32 internal _initialVector = bytes32(0);
+    uint256 internal _valueSize = 1;
 
     event Revealed(
         address indexed revealer,
@@ -87,17 +93,18 @@ contract Revealable_debug {
      * @notice Owner can reveal the hidden values
      * @param key key used to reveal the hidden values
      * @param initialVector initial vector used to reveal the hidden values
+     * @param valueSize the size of each value in byte
      */
-    function reveal(bytes32 key, bytes32 initialVector) public _ownerOnly  {
+    function reveal(bytes32 key, bytes32 initialVector, uint256 valueSize) public _ownerOnly  {
         console.log("\n[\nRevealable::reveal with key called");
-        setRevealKey(key, initialVector);
+        setRevealKey(key, initialVector, valueSize);
         reveal();
     }
 
     /**
      * @notice Owner can set the hidden values
      * @param values an array of hidden values
-     * @param valueSize the size of each hidden value
+     * @param valueSize the size of each hidden value in byte
      */
     function setHiddenValues(
         uint256[] memory values,
@@ -161,28 +168,27 @@ contract Revealable_debug {
      * @notice get the hidden values as bytes
      * @return bytes the hidden values
      */
-    function getHiddenValues() public view returns (bytes memory) {
+    function getHiddenValues() public view hasBeenSet returns (bytes memory) {
         return _hiddenValues;
     }
 
     /**
      * @notice returns the nth hidden value as 256 bits
      * @param index the nth hidden value
-     * @param valueSize the size of the hidden value in bytes
      * @return uint256 the hidden value as uint256
+     * @dev when called before Revealable State will return value as uint256(uint8(value))
      */
     function getHiddenValue(
-        uint256 index,
-        uint256 valueSize
-    ) public view returns (uint256) {
+        uint256 index
+    ) public view hasBeenSet returns (uint256) {
         console.log("\n[\nRevealable::getHiddenValue called");
         console.log("Revealable::getHiddenValue index: %s", index);
         // reach the nth hidden value
-        uint256 hiddenValueIndex = index * valueSize;
-        bytes memory hiddenValue = new bytes(valueSize);
+        uint256 hiddenValueIndex = index * _valueSize;
+        bytes memory hiddenValue = new bytes(_valueSize);
         // get the n bytes of the hidden value
-        for (uint256 i = 0; i < valueSize; i++) {
-            hiddenValue[valueSize - 1 - i] = _hiddenValues[
+        for (uint256 i = 0; i < _valueSize; i++) {
+            hiddenValue[_valueSize - 1 - i] = _hiddenValues[
                 hiddenValueIndex + i
             ];
             console.log("Revealable::getHiddenValue hiddenValue[%s]:", i);
@@ -190,9 +196,9 @@ contract Revealable_debug {
         }
         console.log("Revealable::getHiddenValue hiddenValue:");
         console.logBytes(hiddenValue);
-        // convert the hidden value to uint of valueSize bytes
+        // convert the hidden value to uint of _valueSize bytes
         uint256 hiddenValueAsUint256;
-        for (uint i = 0; i < valueSize; i++) {
+        for (uint i = 0; i < _valueSize; i++) {
             // shift the value to the left by 8 bits
             hiddenValueAsUint256 = hiddenValueAsUint256 << 8;
             // add the value to the hiddenValueAsUint256
@@ -213,10 +219,12 @@ contract Revealable_debug {
      * @param key the key to reveal the hidden values
      * @param initialVector the initialVector to reveal the hidden values
      */
-    function setRevealKey(bytes32 key, bytes32 initialVector) public _ownerOnly hasState(RevealState.Hidden) {
+    function setRevealKey(bytes32 key, bytes32 initialVector, uint256 valueSize) public _ownerOnly hasState(RevealState.Hidden) {
         console.log("\n[\nRevealable::setRevealKey called");
         _key = key;
         _initialVector = initialVector;
+        require (valueSize>0, "valueSize couldn't be zero");
+        _valueSize = valueSize;
         require(
             _key != bytes32(0) && _initialVector != bytes32(0),
             "Revealable: key and initialVector cannot be zero"
@@ -234,15 +242,17 @@ contract Revealable_debug {
      * @notice Owner can reset the key to reveal the hidden values
      * @param key the new key to reveal the hidden values
      * @param initialVector the new initialVector to reveal the hidden values
+     * @param valueSize the size of each value in byte
      */
     function resetRevealKey(
         bytes32 key,
-        bytes32 initialVector
+        bytes32 initialVector,
+        uint256 valueSize
     ) public _ownerOnly hasState(RevealState.Revealable){
         console.log("\n[\nRevealable::resetRevealKey called");
         emit ResetKey(msg.sender, _key, _initialVector);
         _revealState = RevealState.Hidden;
-        setRevealKey(key, initialVector);
+        setRevealKey(key, initialVector,valueSize);
         console.log("Revealable::resetRevealKey _key:");
     }
 
