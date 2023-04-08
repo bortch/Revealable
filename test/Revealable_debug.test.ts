@@ -64,6 +64,15 @@ describe('Revealable Contract Debug testing', function () {
       .to.emit(this.revealable, 'HiddenValuesSet').withArgs(this.owner, dataSet.data);
   });
 
+  it('should revert if index out of range', async function () {
+    // Set the hidden values
+    await this.revealable["setHiddenValues(bytes)"](dataSet.cipherDataAsBytes);
+    // set the valueSize
+    await this.revealable.setRevealKey(dataSet.key, dataSet.iv, dataSet.valueSize);
+    // Get the hidden values
+    await expect(this.revealable.getHiddenValue(dataSet.data.length)).to.revertedWith("Revealable: index out of range");
+  });
+
   it('should cipher values', async function () {
     // ciphering data
     console.log("Encoding data: ", dataSet.data);

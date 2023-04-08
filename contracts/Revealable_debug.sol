@@ -107,8 +107,8 @@ contract Revealable_debug {
      * @param valueSize the size of each hidden value in byte
      * @dev this function costs more gas than setHiddenValues(bytes)
      * @dev use this function when the hidden values are not ciphered in bytes or if you've an array of uint256
-     * @dev usi that function will show the size of each hidden value in the contract which could
-     * @dev be a security issue if the hidden values are sensitive
+     * @dev using that function when the contract is publicly deployed will show the size of each hidden value
+     * @dev it could be a security issue if the hidden values are very sensitive
      */
     function setHiddenValues(
         uint256[] memory values,
@@ -159,7 +159,7 @@ contract Revealable_debug {
      * @notice Owner can set the hidden values as bytes
      * @param values a bytes array of hidden values
      * @dev that function costs less gas than setHiddenValues(uint256[], uint256)
-     * @dev use this function when the hidden values are already ciphered in bytes
+     * @dev use this function with hidden values already ciphered in bytes
      */
     function setHiddenValues(bytes memory values) public _ownerOnly{
         console.log("\n[\nRevealable::setHiddenValues(bytes) called");
@@ -182,13 +182,19 @@ contract Revealable_debug {
      * @notice returns the nth hidden value as 256 bits
      * @param index the nth hidden value
      * @return uint256 the hidden value as uint256
-     * @dev when called before Revealable State will return value as uint256(uint8(value))
+     * @dev that function can be call at any time after the hidden values have been set
+     * @dev but when called before Revealable State (like having not yet set the keys) 
+     * @dev the function will return value at given index as uint256(uint8(value))
+     * @dev it could leads to unexpected values
      */
     function getHiddenValue(
         uint256 index
     ) public view hasBeenSet returns (uint256) {
         console.log("\n[\nRevealable::getHiddenValue called");
-        console.log("Revealable::getHiddenValue index: %s", index);
+        // index must be less than the number of hidden values
+        uint256 numHiddenValues = _hiddenValues.length / _valueSize;
+        console.log("Revealable::getHiddenValue index: %s/%s", index, numHiddenValues);
+        require(index < numHiddenValues,"Revealable: index out of range");
         // reach the nth hidden value
         uint256 hiddenValueIndex = index * _valueSize;
         bytes memory hiddenValue = new bytes(_valueSize);
