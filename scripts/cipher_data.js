@@ -64,30 +64,33 @@ task("cipher", "Hide a value to reveal it later")
         // deploy the contract
         const instance = await contract.deploy();
         // set the data to be ciphered
-        await instance.setHiddenValues(secret, taskArgs.valuesize);
+        await instance['setHiddenValues(uint256[],uint256)'](secret, taskArgs.valuesize);
         // prepare the secret
-        await instance["reveal(bytes32,bytes32)"](key, iv);
+        await instance["reveal(bytes32,bytes32,uint256)"](key, iv,taskArgs.valuesize);
         const cipherData = [];
         for (let i = 0; i < secret.length; i++) {
-            const cipher = await instance.getHiddenValue(i, taskArgs.valuesize);
+            const cipher = await instance.getHiddenValue(i);
             // big number to number
             cipherData.push(cipher.toNumber());
             //cipherData.push(cipher.toHexString());
         }
-        
+
         // set the data to be deciphered
         const decipherData = [];
-        await instance.setHiddenValues(cipherData, taskArgs.valuesize);
+        await instance['setHiddenValues(uint256[],uint256)'](cipherData, taskArgs.valuesize);
         // reveal the secret
-        await instance["reveal(bytes32,bytes32)"](key, iv);
+        await instance["reveal(bytes32,bytes32,uint256)"](key, iv, taskArgs.valuesize);
+
+        const cipherDataAsBytes = await instance.getHiddenValues();
+        console.log(`${chalk.yellow("Ciphered value as bytes:")}\n${cipherDataAsBytes}`);
         // decipher the data to check if it matches the original data
         for (let i = 0; i < cipherData.length; i++) {
-            decipherData.push(await instance.getHiddenValue(i, taskArgs.valuesize));
+            decipherData.push(await instance.getHiddenValue(i));
             assert(decipherData[i] == secret[i], `Deciphered data ${decipherData[i]} does not match the original data ${secret[i]}`);
         }
         console.log(`${chalk.yellow("Ciphered value:")}\n${cipherData}`);
         // create filename based on original filename
-        
+
         let filenameSrc = filePath.split(".")[0];
         // sanitize filename
         // remove absolute path
@@ -101,12 +104,13 @@ task("cipher", "Hide a value to reveal it later")
             fs.mkdirSync(outputDir);
         }
         // create a file text for ciphered data
-        fs.writeFileSync(path.join(outputDir, `${filenameSrc}_ciphered.txt`), JSON.stringify(cipherData));
+        fs.writeFileSync(path.join(outputDir, `${filenameSrc}_ciphered_bytes.txt`), JSON.stringify(cipherDataAsBytes));
+        fs.writeFileSync(path.join(outputDir, `${filenameSrc}_ciphered_array.txt`), JSON.stringify(cipherData));
         // create a file .key for key
         fs.writeFileSync(path.join(outputDir, `${filenameSrc}.key`), key);
         // create a file .iv for iv
         fs.writeFileSync(path.join(outputDir, `${filenameSrc}.iv`), iv);
-        
+
         // write the data to a file
         const filenameReport = `${filenameSrc}_report.json`;
         fs.writeFileSync(path.join(outputDir, filenameReport), JSON.stringify({
@@ -114,13 +118,15 @@ task("cipher", "Hide a value to reveal it later")
             original_Iv: file.iv,
             key_to_use: key,
             iv_to_use: iv,
-            ciphered_secret_to_use: cipherData,
+            ciphered_as_bytes: cipherDataAsBytes,
+            ciphered_as_array: cipherData,
             secret_to_cipher: file.secret,
             hidden_value_bytes_size: taskArgs.valuesize,
         }));
         // display the file path 
-        console.log(`\n${chalk.yellow('The ciphering data has been written into')} ${path.join(__dirname, "output:")}\n
-        ${filenameSrc}_ciphered.txt will contains your ciphered data
+        console.log(`\n${chalk.yellow('The ciphering data has been written into')} ${outputDir}:\n
+        ${filenameSrc}_ciphered_bytes.txt will contains your ciphered data as bytes ${chalk.green('(best to use this one)')}
+        ${filenameSrc}_ciphered_array.txt will contains your ciphered data as an array of values
         ${filenameSrc}.key will contains the key to use to reveal the ciphered data
         ${filenameSrc}.iv will contains the initial vector to use to reveal the ciphered data
         ${filenameSrc}_report.json will contains all the previous data\n
