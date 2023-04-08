@@ -50,7 +50,7 @@ contract Reveal is ERC721, Revealable {
             // require to be minted
             require(_exists(tokenId), "Reveal: token not minted");
 
-            displayId = getHiddenValue(tokenId, 2);
+            displayId = getHiddenValue(tokenId);
         }
         return
             string.concat(
@@ -92,6 +92,6 @@ contract Reveal is ERC721, Revealable {
     function getSecretForTokenId(
         uint256 tokenId
     ) public view returns (uint256) {
-        return getHiddenValue(tokenId, 2);
+        return getHiddenValue(tokenId);
     }
 }

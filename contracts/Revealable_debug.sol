@@ -89,7 +89,7 @@ contract Revealable_debug {
         emit Revealed(msg.sender, _key, _initialVector, _hiddenValues);
     }
 
-        /**
+    /**
      * @notice Owner can reveal the hidden values
      * @param key key used to reveal the hidden values
      * @param initialVector initial vector used to reveal the hidden values
@@ -115,7 +115,6 @@ contract Revealable_debug {
         uint valueSize
     ) public _ownerOnly {
         console.log("\n[\nRevealable::setHiddenValues called");
-        // create a new array of bytes from the uint256 array
         // if _hiddenValues is not empty
         if (_hiddenValues.length > 0) {
             console.log(

@@ -7,11 +7,12 @@ pragma solidity 0.8.18;
  * @author Bortch
  * @custom:url https://github.com/bortch/RevealOnChain
  * @notice Revealable is a contract that can hide and reveal a secret
- * @dev just inherit from this contract to add the reveal feature
+ * @dev just inherit from this contract to add the Revealable feature
  */
 contract Revealable {
 
     enum RevealState {
+        Unset,
         Hidden,
         Revealed,
         Revealable
@@ -36,11 +37,17 @@ contract Revealable {
         _;
     }
 
+    modifier hasBeenSet(){
+        require(_revealState!=RevealState.Unset,'Revealable: contract not set');
+        _;
+    }
+
     address private _owner;
-    RevealState internal _revealState = RevealState.Hidden;
+    RevealState internal _revealState = RevealState.Unset;
     bytes internal _hiddenValues;
     bytes32 internal _key = bytes32(0);
     bytes32 internal _initialVector = bytes32(0);
+    uint256 internal _valueSize = 1;
 
     event Revealed(
         address indexed revealer,
@@ -49,6 +56,7 @@ contract Revealable {
         bytes hiddenValues
     );
     event HiddenValuesSet(address indexed hider, uint256[] hiddenValues);
+    event HiddenValuesSetAsBytes(address indexed hider, bytes hiddenValues);
     event ResetKey(
         address indexed resetter,
         bytes32 indexed key,
@@ -60,10 +68,12 @@ contract Revealable {
         _owner = msg.sender;
     }
 
+    /**
+     * @notice Owner can reveal the hidden values
+     */
     function reveal() public _ownerOnly hasState(RevealState.Revealable) {
         bytes memory hiddenValues = _hiddenValues;
         _hiddenValues = cipherCTR(hiddenValues, _key, _initialVector);
-
         _revealState = RevealState.Revealed;
         emit Revealed(msg.sender, _key, _initialVector, _hiddenValues);
     }
@@ -72,17 +82,21 @@ contract Revealable {
      * @notice Owner can reveal the hidden values
      * @param key key used to reveal the hidden values
      * @param initialVector initial vector used to reveal the hidden values
+     * @param valueSize the size of each value in byte
      */
-    function reveal(bytes32 key, bytes32 initialVector) public _ownerOnly {
-        // set key
-        setRevealKey(key, initialVector);
+    function reveal(bytes32 key, bytes32 initialVector, uint256 valueSize) public _ownerOnly  {
+        setRevealKey(key, initialVector, valueSize);
         reveal();
     }
 
     /**
      * @notice Owner can set the hidden values
      * @param values an array of hidden values
-     * @param valueSize the size of each hidden value
+     * @param valueSize the size of each hidden value in byte
+     * @dev this function costs more gas than setHiddenValues(bytes)
+     * @dev use this function when the hidden values are not ciphered in bytes or if you've an array of uint256
+     * @dev using that function when the contract is publicly deployed will show the size of each hidden value
+     * @dev it could be a security issue if the hidden values are very sensitive
      */
     function setHiddenValues(
         uint256[] memory values,
@@ -92,22 +106,36 @@ contract Revealable {
         if (_hiddenValues.length > 0) {
             delete _hiddenValues;
         }
-        // create a new array of bytes from the uint256 array
+        // for each bytes of the value
         for (uint256 i = 0; i < values.length; i++) {
-            // for each bytes of the value
-            bytes memory valueBytes = new bytes(valueSize);
             for (uint256 j = 0; j < valueSize; j++) {
                 //take only the valueSize first bytes lsbs
-                bytes1 value = bytes1(uint8(values[i] >> (j * 8)));
-
-                // add the value to the hiddenValue array
+                bytes1 value = bytes1(uint8(values[i] >> (j * 8)));                
                 _hiddenValues.push(value);
-                valueBytes[valueSize - 1 - j] = value;
             }
-        }
-
+        }     
         _revealState = RevealState.Hidden;
         emit HiddenValuesSet(msg.sender, values);
+    }
+
+    /**
+     * @notice Owner can set the hidden values as bytes
+     * @param values a bytes array of hidden values
+     * @dev that function costs less gas than setHiddenValues(uint256[], uint256)
+     * @dev use this function with hidden values already ciphered in bytes
+     */
+    function setHiddenValues(bytes memory values) public _ownerOnly{
+        _hiddenValues = values;
+        _revealState = RevealState.Hidden;
+        emit HiddenValuesSetAsBytes(msg.sender, values);
+    }
+
+        /**
+     * @notice get the hidden values as bytes
+     * @return bytes the hidden values
+     */
+    function getHiddenValues() public view hasBeenSet returns (bytes memory) {
+        return _hiddenValues;
     }
 
     /**
@@ -116,22 +144,23 @@ contract Revealable {
      * @return uint256 the hidden value as uint256
      */
     function getHiddenValue(
-        uint256 index,
-        uint256 valueSize
-    ) public view returns (uint256) {
+        uint256 index
+    ) public view hasBeenSet returns (uint256) {
+        // index must be less than the number of hidden values
+        uint256 numHiddenValues = _hiddenValues.length / _valueSize;
+        require(index < numHiddenValues,"Revealable: index out of range");
         // reach the nth hidden value
-        uint256 hiddenValueIndex = index * valueSize;
-        bytes memory hiddenValue = new bytes(valueSize);
+        uint256 hiddenValueIndex = index * _valueSize;
+        bytes memory hiddenValue = new bytes(_valueSize);
         // get the n bytes of the hidden value
-        for (uint256 i = 0; i < valueSize; i++) {
-            hiddenValue[valueSize - 1 - i] = _hiddenValues[
+        for (uint256 i = 0; i < _valueSize; i++) {
+            hiddenValue[_valueSize - 1 - i] = _hiddenValues[
                 hiddenValueIndex + i
             ];
         }
-
         // convert the hidden value to uint of valueSize bytes
         uint256 hiddenValueAsUint256;
-        for (uint i = 0; i < valueSize; i++) {
+        for (uint i = 0; i < _valueSize; i++) {
             // shift the value to the left by 8 bits
             hiddenValueAsUint256 = hiddenValueAsUint256 << 8;
             // add the value to the hiddenValueAsUint256
@@ -139,7 +168,6 @@ contract Revealable {
                 hiddenValueAsUint256 |
                 uint256(uint8(hiddenValue[i]));
         }
-
         return hiddenValueAsUint256;
     }
 
@@ -148,34 +176,39 @@ contract Revealable {
      * @param key the key to reveal the hidden values
      * @param initialVector the initialVector to reveal the hidden values
      */
-    function setRevealKey(bytes32 key, bytes32 initialVector) public _ownerOnly hasState(RevealState.Hidden) {
+    function setRevealKey(bytes32 key, bytes32 initialVector, uint256 valueSize) public _ownerOnly hasState(RevealState.Hidden) {
         _key = key;
         _initialVector = initialVector;
+        require (valueSize>0, "valueSize couldn't be zero");
+        _valueSize = valueSize;
         require(
             _key != bytes32(0) && _initialVector != bytes32(0),
             "Revealable: key and initialVector cannot be zero"
         );
         // if key and initialVector are set to zero, the contract is not revealed
-
         _revealState = RevealState.Revealable;
     }
 
     function resetRevealKey(
         bytes32 key,
-        bytes32 initialVector
+        bytes32 initialVector,
+        uint256 valueSize
     ) public _ownerOnly hasState(RevealState.Revealable){
         emit ResetKey(msg.sender, _key, _initialVector);
         _revealState = RevealState.Hidden;
-        setRevealKey(key, initialVector);
+        setRevealKey(key, initialVector, valueSize);
     }
 
+    /**
+     * @notice Owner can reset the revealation of the hidden values
+     * @dev the hidden values are deciphered using the key and the initialVector
+     * @dev the hidden values are not safe anymore as it is written in the blockchain
+     */
     function resetReveal() public _ownerOnly hasState(RevealState.Revealed) {
         // revert the cipher
         bytes memory hiddenValues = _hiddenValues;
         _hiddenValues = cipherCTR(hiddenValues, _key, _initialVector);
-
         _revealState = RevealState.Revealable;
-
         emit ResetRevealable(msg.sender);
     }
 
