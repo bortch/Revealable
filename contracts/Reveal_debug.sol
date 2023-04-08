@@ -48,6 +48,8 @@ contract Reveal_debug is ERC721, Revealable_debug {
         console.log("\nReveal::getMetadata called");
         console.log("Reveal::getMetadata tokenId: %s", tokenId);
         uint256 displayId = tokenId;
+        // print state
+        console.log("Reveal::getMetadata _revealState: %s", uint256(_revealState));
 
         if(_revealState == RevealState.Revealed) {
             // require to be minted

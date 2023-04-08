@@ -7,6 +7,9 @@ var chaiJsonEqual = require('chai-json-equal');
 var chai = require('chai');
 chai.use(chaiJsonEqual);
 
+//import dataset json
+import dataSet from './dataSet.json';
+
 // Start test block
 describe('Reveal Contract Debug testing', function () {
   before(async function () {
@@ -22,18 +25,11 @@ describe('Reveal Contract Debug testing', function () {
 
   beforeEach(async function () {
     // test data
-    this.test_case ={
-      data: [4062,55174,23769,24456,46791,7236,39972,51902,58541,17820],
-      key: '0xcaa6e3191f88601644b74e72893e1b392583b6a04f71511bcc2a8b7280933604',
-      iv: '0xe92f5949babb53eb160f01da9321a6e7744a28f4795f38cb5bba1b6b73e1acbe',
-      cipherData: [766, 10105, 58665, 13202, 65495, 53002, 10655, 64327, 31668, 28695 ],
-      hiddenValueBytesSize: 2
-    };
     // deploy the contract
     this.reveal = await this.Reveal_debug.deploy();
     await this.reveal.deployed();
     // Set the hidden value
-    await this.reveal.setHiddenValues(this.test_case.cipherData,this.test_case.hiddenValueBytesSize);
+    await this.reveal["setHiddenValues(bytes)"](dataSet[0].cipherDataAsBytes);
     // Get the collector contract for signing transaction with collector key
     this.collectorContract = this.reveal.connect(this.signers[1]);
 
@@ -49,15 +45,14 @@ describe('Reveal Contract Debug testing', function () {
 // Test cases
 
 it('should return the correct secret for tokenId', async function () {
-  await this.reveal.setHiddenValues(this.test_case.cipherData,this.test_case.hiddenValueBytesSize);
+  await this.reveal["setHiddenValues(uint256[],uint256)"](dataSet[0].cipherData,dataSet[0].valueSize);
   
-  //unrevealed
-  expect(await this.reveal.getSecretForTokenId(1)).to.equal(ethers.BigNumber.from(this.test_case.cipherData[1]));
-  
-  //revealed
-  await this.reveal.setRevealKey(this.test_case.key, this.test_case.iv);
-  await this.reveal.reveal();
-  expect(await this.reveal.getSecretForTokenId(1)).to.equal(ethers.BigNumber.from(this.test_case.data[1]));
+  //unrevealed must fail as the key and iv are not set
+  expect(await this.reveal.getSecretForTokenId(1)).to.be.not.equal(ethers.BigNumber.from(dataSet[0].cipherData[1]));
+  expect(await this.reveal.getSecretForTokenId(1)).to.be.not.equal(ethers.BigNumber.from(dataSet[0].data[1]));
+  //revealed must return the correct secret
+  await this.reveal["reveal(bytes32,bytes32,uint256)"](dataSet[0].key, dataSet[0].iv,dataSet[0].valueSize);
+  expect(await this.reveal.getSecretForTokenId(1)).to.equal(ethers.BigNumber.from(dataSet[0].data[1]));
 });
 
 
@@ -94,25 +89,25 @@ it('should return the correct secret for tokenId', async function () {
 
 it('Should get decrypted token if revealed', async function () {
   console.log('Should get decrypted token if revealed');
-  await this.reveal.setHiddenValues(this.test_case.cipherData,this.test_case.hiddenValueBytesSize);
-  await this.reveal.setRevealKey(this.test_case.key, this.test_case.iv);
-  await this.reveal.reveal();          
+  await this.reveal["setHiddenValues(uint256[],uint256)"](dataSet[0].cipherData,dataSet[0].valueSize);
+  await this.reveal.setRevealKey(dataSet[0].key, dataSet[0].iv, dataSet[0].valueSize);
+  await this.reveal["reveal()"]();          
 
   for (let i = 0; i < this.initialMint.length; i++) {
     const index = this.initialMint[i];
     // reveal the token
     // get the tokenId
     let tokenId = await this.reveal.getSecretForTokenId(index);
-    console.log("tokenId: ", tokenId);
+    console.log("tokenId:", tokenId);
     // get the tokenURI
     let tokenURI = await this.reveal.tokenURI(index);
-    console.log("tokenURI: ", tokenURI);
+    console.log("tokenURI as base64:", tokenURI);
     // extract the encrypted token from the tokenURI
     // tokenUri is a base64 encoded string
     let tokenUri_json = JSON.parse(base64decode(tokenURI.split(',')[1]));
-    console.log(tokenUri_json);
+    console.log("tokenURI decoded:",tokenUri_json);
     let tokenId_received = tokenUri_json.name.split('#')[1];
-    expect(tokenId_received).to.equal(ethers.BigNumber.from(this.test_case.data[index]), "tokenId_received: " + tokenId_received + " test_case.data[i]: " + this.test_case.data[index]);
+    expect(tokenId_received).to.equal(ethers.BigNumber.from(dataSet[0].data[index]), "tokenId_received: " + tokenId_received + " test_case.data[i]: " + dataSet[0].data[index]);
   }
 });
 

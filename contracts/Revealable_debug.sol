@@ -105,6 +105,10 @@ contract Revealable_debug {
      * @notice Owner can set the hidden values
      * @param values an array of hidden values
      * @param valueSize the size of each hidden value in byte
+     * @dev this function costs more gas than setHiddenValues(bytes)
+     * @dev use this function when the hidden values are not ciphered in bytes or if you've an array of uint256
+     * @dev usi that function will show the size of each hidden value in the contract which could
+     * @dev be a security issue if the hidden values are sensitive
      */
     function setHiddenValues(
         uint256[] memory values,
@@ -154,6 +158,8 @@ contract Revealable_debug {
     /**
      * @notice Owner can set the hidden values as bytes
      * @param values a bytes array of hidden values
+     * @dev that function costs less gas than setHiddenValues(uint256[], uint256)
+     * @dev use this function when the hidden values are already ciphered in bytes
      */
     function setHiddenValues(bytes memory values) public _ownerOnly{
         console.log("\n[\nRevealable::setHiddenValues(bytes) called");

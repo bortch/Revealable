@@ -7,26 +7,11 @@ var chaiJsonEqual = require('chai-json-equal');
 var chai = require('chai');
 chai.use(chaiJsonEqual);
 
+//import dataset json
+import _dataSet from './dataSet.json';
 
-const dataSet = {
-  data: [4062, 55174, 23769, 24456, 46791, 7236, 39972, 51902, 58541, 17820],
-  key: '0xcaa6e3191f88601644b74e72893e1b392583b6a04f71511bcc2a8b7280933604',
-  iv: '0xe92f5949babb53eb160f01da9321a6e7744a28f4795f38cb5bba1b6b73e1acbe',
-  cipherData: [
-    766, 10105, 58665,
-  13202, 65495, 53002,
-  10655, 64327, 31668,
-  28695
-],
-  cipherDataAsBytes: '0xfe02792729e59233d7ff0acf9f2947fbb47b1770',
-  decipherMessage: [
-    4062, 55174, 23769,
-   24456, 46791,  7236,
-   39972, 51902, 58541,
-   17820
- ],
-  valueSize: 2
-};
+
+const dataSet = _dataSet[0];
 
 // Start test block
 describe('Revealable Contract Debug testing', function () {
@@ -192,7 +177,7 @@ describe('Revealable Contract Debug testing', function () {
     expect(cipherData).to.be.equals(dataSet.cipherDataAsBytes);
   });
 
-  it('shoulb setHiddenValues with bytes', async function () {
+  it('should setHiddenValues with bytes', async function () {
     console.log("Encoding data: ", dataSet.cipherDataAsBytes);
     await this.revealable["setHiddenValues(bytes)"](dataSet.cipherDataAsBytes);
     console.log("set reveal key");
