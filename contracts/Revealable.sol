@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.18;
 
-
 /**
  * @title Revealable Contract (Debug Version)
  * @author Bortch
@@ -10,7 +9,6 @@ pragma solidity 0.8.18;
  * @dev just inherit from this contract to add the Revealable feature
  */
 contract Revealable {
-
     enum RevealState {
         Unset,
         Hidden,
@@ -33,12 +31,18 @@ contract Revealable {
         } else if (state == RevealState.Revealable) {
             message = "revealable";
         }
-        require(_revealState == state, string.concat('Revealable: contract not ',message));
+        require(
+            _revealState == state,
+            string.concat("Revealable: contract not ", message)
+        );
         _;
     }
 
-    modifier hasBeenSet(){
-        require(_revealState!=RevealState.Unset,'Revealable: contract not set');
+    modifier hasBeenSet() {
+        require(
+            _revealState != RevealState.Unset,
+            "Revealable: contract not set"
+        );
         _;
     }
 
@@ -84,7 +88,11 @@ contract Revealable {
      * @param initialVector initial vector used to reveal the hidden values
      * @param valueSize the size of each value in byte
      */
-    function reveal(bytes32 key, bytes32 initialVector, uint256 valueSize) public _ownerOnly  {
+    function reveal(
+        bytes32 key,
+        bytes32 initialVector,
+        uint256 valueSize
+    ) public _ownerOnly {
         setRevealKey(key, initialVector, valueSize);
         reveal();
     }
@@ -110,10 +118,10 @@ contract Revealable {
         for (uint256 i = 0; i < values.length; i++) {
             for (uint256 j = 0; j < valueSize; j++) {
                 //take only the valueSize first bytes lsbs
-                bytes1 value = bytes1(uint8(values[i] >> (j * 8)));                
+                bytes1 value = bytes1(uint8(values[i] >> (j * 8)));
                 _hiddenValues.push(value);
             }
-        }     
+        }
         _revealState = RevealState.Hidden;
         emit HiddenValuesSet(msg.sender, values);
     }
@@ -124,13 +132,13 @@ contract Revealable {
      * @dev that function costs less gas than setHiddenValues(uint256[], uint256)
      * @dev use this function with hidden values already ciphered in bytes
      */
-    function setHiddenValues(bytes memory values) public _ownerOnly{
+    function setHiddenValues(bytes memory values) public _ownerOnly {
         _hiddenValues = values;
         _revealState = RevealState.Hidden;
         emit HiddenValuesSetAsBytes(msg.sender, values);
     }
 
-        /**
+    /**
      * @notice get the hidden values as bytes
      * @return bytes the hidden values
      */
@@ -148,7 +156,7 @@ contract Revealable {
     ) public view hasBeenSet returns (uint256) {
         // index must be less than the number of hidden values
         uint256 numHiddenValues = _hiddenValues.length / _valueSize;
-        require(index < numHiddenValues,"Revealable: index out of range");
+        require(index < numHiddenValues, "Revealable: index out of range");
         // reach the nth hidden value
         uint256 hiddenValueIndex = index * _valueSize;
         bytes memory hiddenValue = new bytes(_valueSize);
@@ -176,10 +184,14 @@ contract Revealable {
      * @param key the key to reveal the hidden values
      * @param initialVector the initialVector to reveal the hidden values
      */
-    function setRevealKey(bytes32 key, bytes32 initialVector, uint256 valueSize) public _ownerOnly hasState(RevealState.Hidden) {
+    function setRevealKey(
+        bytes32 key,
+        bytes32 initialVector,
+        uint256 valueSize
+    ) public _ownerOnly hasState(RevealState.Hidden) {
         _key = key;
         _initialVector = initialVector;
-        require (valueSize>0, "valueSize couldn't be zero");
+        require(valueSize > 0, "valueSize couldn't be zero");
         _valueSize = valueSize;
         require(
             _key != bytes32(0) && _initialVector != bytes32(0),
@@ -193,7 +205,7 @@ contract Revealable {
         bytes32 key,
         bytes32 initialVector,
         uint256 valueSize
-    ) public _ownerOnly hasState(RevealState.Revealable){
+    ) public _ownerOnly hasState(RevealState.Revealable) {
         emit ResetKey(msg.sender, _key, _initialVector);
         _revealState = RevealState.Hidden;
         setRevealKey(key, initialVector, valueSize);
@@ -227,28 +239,22 @@ contract Revealable {
         bytes32 iv
     ) public pure returns (bytes memory result) {
         uint256 length = data.length;
-
         assembly {
             result := mload(0x40)
             mstore(0x40, add(add(result, length), 32))
             mstore(result, length)
         }
-
         for (uint256 i = 0; i < length; i += 32) {
             bytes32 dataBlock;
             assembly {
                 dataBlock := mload(add(data, add(i, 32)))
             }
-
             bytes32 keyStream = keccak256(abi.encode(key, iv, i));
-
             bytes32 cipherBlock = dataBlock ^ keyStream;
-
             assembly {
                 mstore(add(result, add(i, 32)), cipherBlock)
             }
         }
-
         return result;
     }
 }
