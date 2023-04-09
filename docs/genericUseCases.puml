@@ -5,10 +5,10 @@ left to right direction
 actor Owner as O
 
 rectangle "Contract creation"{
+    O -> (4. Send hidden\nsecret to\ncontract)
     (2. Create\nContract) <-[norank]- O
     O -[norank]-> (1. Cipher\nSecret)
     O -> (3. Deploy\nContract)
-    O -> (4. Send hidden\nsecret to\ncontract)
 }
 
 '---------------------------------------------
@@ -20,13 +20,13 @@ left to right direction
 actor "Collector" as C
 
 rectangle "Collector's interaction with the contract" as interaction{
+    C -> (2. Get TokenURI)
     C -> (1. Mint Token)
-    C -> (2. Get Token)
 }
 
 C -[hidden]left-> interaction
 
-note right of (2. Get Token)
+note right of (2. Get TokenURI)
     The collector can get the 
     secret only if that token 
     has been minted.

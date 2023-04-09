@@ -1,22 +1,22 @@
-# Revealable On Chain Secret Scheme
+# Revealable
 
-This is a scheme to embed a **hidden value** in a smart contract that could be revealed by the owner of the contract.
+This is a scheme to embed an **hidden value** in a smart contract that could be revealed later by the owner of the contract.
 
 ## Motivation
 
-The motivation for this system is to give the owner of a smart contract the ability to hide a value or values at the time of deployment, and reveal them later.
+The motivation for this scheme is to give the owner of a smart contract the ability to hide a value or an array of values at the time of deployment, and reveal them later.
 
 ### A concret example: Primes
 
-The initial idea was to hide which [Primes](https://www.primes.wtf/) will be minted by the collector during the drop.
+The initial idea was to hide which [Primes](https://www.primes.wtf/) NFT will be minted by the collector during the drop.
 
 The artist [g56d](https://www.g56d.art/) offers a series of OnChain NFTs that vary in rarity.
 
-He doesn't want the collector to be aware of the differences in the intrinsic qualities of each NFT and thus avoid that some people buy the best ones first and the others do not want to buy the others anymore.
+He doesn't want the collector to be aware of the differences in the intrinsic qualities of each NFT and thus avoid that some collector buy the best ones first and the others do not want to buy the others anymore.
 
 > Each NFT should have an equal chance of being bought.
 
-In this way, the artist can set a unit price and leave it to chance to determine who will mint which NFT.
+In this way, the artist can set a low and unique unit price and leave it to chance to determine who will mint which NFT.
 
 ### Randomisation & obfuscation
 
@@ -39,19 +39,19 @@ But on the other hand, can we really blame him for wanting to make a living from
 
 ### Uses cases
 
-![Contract Creation](docs/contract_creation.png)
+![Contract Creation](docs/usecase_contract_creation.png)
 
 - The owner must prepare his value to hide and cipher it using a key and a intial vector.
 - The owner must write down the ciphered value into the smart contract.
 - The owner must test his smart contract to make sure everything works as expected.
 - The owner must deploy the smart contract.
 
-![Contract Interaction](docs/contract_interaction.png)
+![Contract Interaction](docs/usecase_contract_interaction.png)
 
 - The collector can mint the smart contract.
 - The collector can call the smart contract but get the ciphered value .
 
-![Reveal Secret](docs/reveal_secret.png)
+![Reveal Secret](docs/usecase_reveal_secret.png)
 
 - The owner can reveal the hidden value by calling a specific function that will write the key into the smart contract.
 - The collector can call the smart contract and get the revealed value.
@@ -66,7 +66,7 @@ But on the other hand, can we really blame him for wanting to make a living from
 - The owner writes down the ciphered value into the smart contract.
 - The owner tests his smart contract to make sure everything works as expected.
 
-### Reveal
+### Reveal Sequence
 
 ![Contract interaction](docs/Contract_interaction_SeqDiag.png)
 
