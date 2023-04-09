@@ -1,15 +1,15 @@
 @startuml
 
 hide empty description
-
-[*] -[#Fuchsia]-> Hidden: t0 - setHiddenValue()
-Hidden -[#Blue]--> Revealable: t1 A - setRevealKey()
+[*] -[#Black]> Unset: instantiate
+Unset -[#Fuchsia]-> Hidden: t0 - setHiddenValue(...)
+Hidden -[#Blue]--> Revealable: t1 A - setRevealKey(...)
 Revealable -[#Blue]--> Revealed: t2 A - reveal()
-Hidden <-[#Fuchsia]- Revealable: r1 A - setHiddenValue()
-Revealable <-[#Fuchsia]- Revealable: r3 A - resetRevealKey()
+Hidden <-[#Fuchsia]- Revealable: r1 A - setHiddenValue(...)
+Revealable <-[#Fuchsia]- Revealable: r3 A - resetRevealKey(...)
 Revealable <-[#Fuchsia]- Revealed: r2 A - resetReveal()
-Hidden -[#Blue]-> Revealed : t1 B - reveal(keys)
-Hidden <-[#Fuchsia]- Revealed: r2 B - setHiddenValue()
+Hidden -[#Blue]-> Revealed : t1 B - reveal(...)
+Hidden <-[#Fuchsia]- Revealed: r2 B - setHiddenValue(...)
 
 legend right
 |= |= Code |= Description |

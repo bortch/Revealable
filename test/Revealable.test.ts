@@ -75,11 +75,11 @@ describe('Revealable Contract testing', function () {
 
   it('should cipher values', async function () {
     // ciphering data
-    console.log("Encoding data: ", dataSet.data);
+    //console.log("Encoding data: ", dataSet.data);
     await this.revealable["setHiddenValues(uint256[],uint256)"](dataSet.data, dataSet.valueSize);
-    console.log("set reveal key");
+    //console.log("set reveal key");
     await this.revealable.setRevealKey(dataSet.key, dataSet.iv, dataSet.valueSize);
-    console.log("ciphering data");
+    //console.log("ciphering data");
     await this.revealable['reveal()']();
 
     //check that values are different
@@ -90,18 +90,18 @@ describe('Revealable Contract testing', function () {
       expect(hiddenValue).to.not.equal(dataSet.data[i], `hiddenValue: ${hiddenValue}, expected: ${dataSet.data[i]}`);
       expect(hiddenValue).to.be.equal(dataSet.cipherData[i], `hiddenValue: ${hiddenValue}, expected: ${dataSet.cipherData[i]}`);
     }
-    console.log("cipherData: ", cipherData);
+    //console.log("cipherData: ", cipherData);
   });
 
   it('should decipher hidden value if revealed', async function () {
     // ciphering data
-    console.log("Encoding data: ", dataSet.data);
+    //console.log("Encoding data: ", dataSet.data);
     await this.revealable["setHiddenValues(uint256[],uint256)"](dataSet.data, 2);
     // try to reveal without setting the key
     await expect(this.revealable['reveal()']()).to.be.revertedWith("Revealable: contract not revealable");
-    console.log("set reveal key");
+    //console.log("set reveal key");
     await this.revealable.setRevealKey(dataSet.key, dataSet.iv, dataSet.valueSize);
-    console.log("ciphering data");
+    //console.log("ciphering data");
     await this.revealable['reveal()']();
     const cipherData = [];
     for (let i = 0; i < dataSet.data.length; i++) {
@@ -113,8 +113,8 @@ describe('Revealable Contract testing', function () {
     // set wrong key
     const wrongKey = ethers.BigNumber.from(ethers.utils.randomBytes(32)).toHexString();
     const wrongIv = ethers.BigNumber.from(ethers.utils.randomBytes(32)).toHexString();
-    console.log("wrongKey: ", wrongKey);
-    console.log("wrongIv: ", wrongIv);
+    //console.log("wrongKey: ", wrongKey);
+    //console.log("wrongIv: ", wrongIv);
     // reset keys must fail because contract is in RevealState.Revealed
     await expect(this.revealable.resetRevealKey(wrongKey, wrongIv, dataSet.valueSize)).to.be.revertedWith("Revealable: contract not revealable");
     // try to reveal without resetting the reveal must fail
@@ -136,15 +136,15 @@ describe('Revealable Contract testing', function () {
   it('should cipher and decipher if revealed', async function () {
 
     // ciphering data
-    console.log("Encoding data: ", dataSet.data);
+    //console.log("Encoding data: ", dataSet.data);
     await this.revealable["setHiddenValues(uint256[],uint256)"](dataSet.data, 2);
-    console.log("set reveal key");
+    //console.log("set reveal key");
     await this.revealable.setRevealKey(dataSet.key, dataSet.iv, dataSet.valueSize);
-    console.log("ciphering data");
+    //console.log("ciphering data");
     await this.revealable['reveal()']();
 
     const hiddenValueBytes = await this.revealable.getHiddenValues();
-    console.log(`hiddenValuesBytes:${hiddenValueBytes}`);
+    //console.log(`hiddenValuesBytes:${hiddenValueBytes}`);
 
     //check that values are different
     const cipherData = [];
@@ -155,11 +155,11 @@ describe('Revealable Contract testing', function () {
     }
 
     // deciphering data
-    console.log("setting ciphered data: ", dataSet.cipherData);
+    //console.log("setting ciphered data: ", dataSet.cipherData);
     await this.revealable["setHiddenValues(bytes)"](hiddenValueBytes);
-    console.log("set reveal key");
+    //console.log("set reveal key");
     await this.revealable.setRevealKey(dataSet.key, dataSet.iv, dataSet.valueSize);
-    console.log("Revealing data");
+    //console.log("Revealing data");
     await this.revealable['reveal()']();
 
     // check that values are the same as the original data
@@ -170,28 +170,28 @@ describe('Revealable Contract testing', function () {
       expect(hiddenValue).to.equal(dataSet.data[i], `hiddenValue: ${hiddenValue}, expected: ${dataSet.data[i]}`);
     }
 
-    console.log("cipherData: ", cipherData);
-    console.log("decipherData: ", decipherData);
+    //console.log("cipherData: ", cipherData);
+    //console.log("decipherData: ", decipherData);
   });
 
   it('should return cipher values as byte', async function () {
-    console.log("Encoding data: ", dataSet.data);
+    //console.log("Encoding data: ", dataSet.data);
     await this.revealable["setHiddenValues(uint256[],uint256)"](dataSet.data, dataSet.valueSize);
-    console.log("set reveal key");
+    //console.log("set reveal key");
     await this.revealable.setRevealKey(dataSet.key, dataSet.iv, dataSet.valueSize);
-    console.log("ciphering data");
+    //console.log("ciphering data");
     await this.revealable['reveal()']();
     const cipherData = await this.revealable['getHiddenValues()']();
-    console.log("cipherData: ", cipherData);
+    //console.log("cipherData: ", cipherData);
     expect(cipherData).to.be.equals(dataSet.cipherDataAsBytes);
   });
 
   it('should setHiddenValues with bytes', async function () {
-    console.log("Encoding data: ", dataSet.cipherDataAsBytes);
+    //console.log("Encoding data: ", dataSet.cipherDataAsBytes);
     await this.revealable["setHiddenValues(bytes)"](dataSet.cipherDataAsBytes);
-    console.log("set reveal key");
+    //console.log("set reveal key");
     await this.revealable.setRevealKey(dataSet.key, dataSet.iv, dataSet.valueSize);
-    console.log("deciphering data");
+    //console.log("deciphering data");
     await this.revealable['reveal()']();
     const decipherData = [];
     for (let i = 0; i < dataSet.data.length; i++) {

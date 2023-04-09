@@ -1,8 +1,8 @@
 @startuml
 
 hide empty description
-
-[*] -[#Blue]> Hidden: t0
-Hidden -[#Blue]--> Revealed : t1
-Hidden <-[#Fuchsia]- Revealed: r1
+[*] -[#Black]> Unset: instantiate
+Unset -[#Blue]-> Hidden: t1
+Hidden -[#Blue]--> Revealed : t2
+Hidden <-[#Fuchsia]- Revealed: r2
 @enduml

@@ -114,9 +114,11 @@ npx hardhat test
 
 ### Using Cipher script
 
-```terminal
+Use the `cipher` hardhat task to cipher your data.
+
+```text
 $ npx hardhat cipher --source demo.json
-                                                                                                                                                                                                
+
 @@@@@@@   @@@@@@@@  @@@  @@@  @@@@@@@@   @@@@@@   @@@        @@@@@@   @@@@@@@   @@@       @@@@@@@@  
 @@@@@@@@  @@@@@@@@  @@@  @@@  @@@@@@@@  @@@@@@@@  @@@       @@@@@@@@  @@@@@@@@  @@@       @@@@@@@@  
 @@!  @@@  @@!       @@!  @@@  @@!       @@!  @@@  @@!       @@!  @@@  @@!  @@@  @@!       @@!       
@@ -130,14 +132,17 @@ $ npx hardhat cipher --source demo.json
                                                                                                     
 Key: 0xcaa6e3191f88601644b74e72893e1b392583b6a04f71511bcc2a8b7280933604
 IV: 0xe92f5949babb53eb160f01da9321a6e7744a28f4795f38cb5bba1b6b73e1acbe
-Secret to cipher:
+Value to cipher:
 4062,55174,23769,24456,46791,7236,39972,51902,58541,17820
+Ciphered value as bytes:
+0xde0f86d7d95c885fc7b6441c249cbecaade49c45
 Ciphered value:
 766,10105,58665,13202,65495,53002,10655,64327,31668,28695
 
-The ciphering data has been written into ./output:
+The ciphering data has been written into ./cipher_output_demo:
 
-        demo_ciphered.txt will contains your ciphered data
+        demo_ciphered_bytes.txt will contains your ciphered data as bytes (best to use this one)
+        demo_ciphered_array.txt will contains your ciphered data as an array of values
         demo.key will contains the key to use to reveal the ciphered data
         demo.iv will contains the initial vector to use to reveal the ciphered data
         demo_report.json will contains all the previous data
@@ -146,16 +151,19 @@ The ciphering data has been written into ./output:
 
 ```
 
-You can then deploy the contract and call the `setHiddenValue` method to send the generated Ciphered data into the smart contract.
+Then you will have to deploy your contract and call the `setHiddenValue` method to send the generated Ciphered data into the smart contract.
 
-### Output files
+### Cipher task output files
 
 the `cipher` Hardhat task will output a series of files in a folder named `cipher_output_{filename}`.
 
-- `{filename}_ciphered.txt` will contains your ciphered data
+- `{filename}_ciphered_bytes.txt` will contains your ciphered data as bytes. This is the best way to send the data into the smart contract. It is gaz cheaper to send bytes than to send an array of values.
+- `{filename}_ciphered_array.txt` will contains your ciphered data as an array of integer values.
 - `{filename}.key` will contains the key to use to reveal the ciphered data
 - `{filename}.iv` will contains the initial vector to use to reveal the ciphered data
 - `{filename}_report.json` will contains all the previous data json
+
+#### Example of report file
 
 ```json
 {
@@ -163,7 +171,8 @@ the `cipher` Hardhat task will output a series of files in a folder named `ciphe
     "original_Iv": "",
     "key_to_use": "0xcaa6e3191f88601644b74e72893e1b392583b6a04f71511bcc2a8b7280933604",
     "iv_to_use": "0xe92f5949babb53eb160f01da9321a6e7744a28f4795f38cb5bba1b6b73e1acbe",
-    "ciphered_value_to_use": [
+    "ciphered_as_bytes": "0xde0f86d7d95c885fc7b6441c249cbecaade49c45",
+    "ciphered_as_array": [
         766,
         10105,
         58665,
@@ -175,23 +184,11 @@ the `cipher` Hardhat task will output a series of files in a folder named `ciphe
         31668,
         28695
     ],
-    "value_to_cipher": [
-        4062,
-        55174,
-        23769,
-        24456,
-        46791,
-        7236,
-        39972,
-        51902,
-        58541,
-        17820
-    ],
     "hidden_value_bytes_size": 2
 }
 ```
 
-### Cipher task command
+### Cipher task command with arguments
 
 ```bash
 npx hardhat cipher --source {path_to_value_to_hide_JSON_file} --key {key} --iv {iv} --valuesize {value}
@@ -217,7 +214,7 @@ The value can be a string, a number or an array.
 }
 ```
 
-JSON file can optionally contains `key` and `iv` keys.
+JSON file can optionally contains `key` and `iv` keys. Those are limited to 32 bytes.
 
 ```json
 {
@@ -228,7 +225,7 @@ JSON file can optionally contains `key` and `iv` keys.
 ```
 
 If key and iv are provided, they will be used to cipher the value to hide.
-Else, they will be generated randomly if not provided through the `--key` and `--iv` parameters.
+If no key or iv are provided, they will be generated randomly.
 
 #### Optional parameters
 
@@ -241,7 +238,10 @@ Else, they will be generated randomly if not provided through the `--key` and `-
 
 If no key and iv are provided, they will be generated randomly.
 
-##### Value to hide
+##### Size of value to hide
+
+In the current implementation, each value have to be the same size. Initially, the value to hide was an array and the `setHiddenValue` method simply pushed the value to hide into an array in the smart contract.
+An enhancement was made to reduce the space used in the smart contract when the value to hide is smaller than 32 bytes. The value to hide is now stored as concatenated bytes. But you still to provide the byte size of the value to hide.
 
 ```bash
 --valuesize {value} # the size in byte of (each) value to hide
@@ -257,10 +257,9 @@ By default, the value to hide will be 2 bytes long.
 
 The contract could only be in one of the following states:
 
+- `Unset`: the value to hide is not set
 - `Hidden`: the value to hide is set but not revealed
 - `Revealed`: the value to hide is revealed
-
-For now, there is no guard if the value to hide has not been set.
 
 Under the hood, there's an internal state named `Revealable`. Its purpose is to reset the keys in case of sending wrong keys.
 
@@ -268,106 +267,24 @@ Under the hood, there's an internal state named `Revealable`. Its purpose is to 
 
 ![Revealable contract state transition](./docs/Revealable_state_details.png)
 
-There are 2 ways for the contract owner to reveal the value to hide (path A and path B).
+There are 2 ways for the contract owner to reveal the hidden value (path A and path B).
 
 #### Path A
 
-- `setHiddenValue(value_to_hide,valueSize)`: the value to hide is set and the contract is in the `Hidden` state
-- `reveal(keys, valueSize)`: the value to hide is revealed and the contract is in the `Revealed` state
+- [`t0`] `setHiddenValue(value_to_hide)`: the value to hide is set and the contract is in the `Hidden` state
+- [`t1`] `setRevealKey(key, iv, valueSize)`: the value to hide is revealed and the contract is in the `Revealable` state
+- [`t2`] `reveal()`: the value to hide is revealed and the contract is in the `Revealed` state
 
 #### Path B
 
-- `setHiddenValue(value_to_hide,valueSize)`: the value to hide is set and the contract is in the `Hidden` state
-- `setRevealKey(keys, valueSize)`: the value to hide is revealed and the contract is in the `Revealable` state
-- `reveal()`: the value to hide is revealed and the contract is in the `Revealed` state
+- [`t0`] `setHiddenValue(value_to_hide)`: the value to hide is set and the contract is in the `Hidden` state
+- [`t1`] `reveal(keys, valueSize)`: the value to hide is revealed and the contract is in the `Revealed` state
 
-### Implementing the Revealable contract
+### Reveal Contract: a quick implementation example
 
-In our example, the artist randomly defines an order in which the NFTs will be assigned.
-He defines a list of values where each value will refer to an NFT. This can be a serial number, a DNA, an address.
+For an example of implementation, you can check the `Reveal.sol` contract.
 
-Collectors will mint on a first come, first served basis. The attribution will be done in the order of minting.
-
-Our value to hide is an array of 16 bytes.
-
-```typescript
-    uint16[] private _ids;
-```
-
-We started by defining a bijective encryption function. Here we have taken CTR, but there are other alternatives. bijective means that the encryption function is reversible.
-
-The artist will be able to encrypt his array of values into an array of ciphered values using the chosen encryption function.
-
-For the example, after performing all the necessary tests, we used *hardhat* and called the locally deployed contract to encrypt the array of values to be hidden.
-
-```typescript
-const cipherMessage = await this.reveal.cipher(data, key, iv);
-```
-
-We then hardcoded the resulting table into the contract.
-
-```typescript
-    uint16[] private _ids = [0x56f2,0x8eaa,0x05f5,0x06a4,0xefeb,0x4568,0xc508,0x9392,0xbd81,0x1cb0];
-```
-
-According to the description of IERC721Metadata, we need a `tokenURI(uint256 tokenId) → string` callable function which returns either a link to a resource or metadata that follow a certain schema. Since we are doing OnChain, we will return metadata instead.
-
-```typescript
-function tokenURI(
-        uint256 tokenId
-    ) public view virtual override returns (string memory) {
-        _requireMinted(tokenId);
-        return getMetadata(tokenId);
-    }
-```
-
-There is not necessarily a reason to create a specific function to return the metadata.
-
-We know that in the present *use case*, the tokenId value comes from an array of `uint16`, so it will have to be converted to `uint256` to comply with the signature of the `tokenURI(uint256 tokenId)` function.
-The `tokenId` is received as an `uint256`, but the value or useful information is encoded in 2 bytes, so it will have to be converted again to get the right expected value.
-
-```typescript
-function getMetadata(
-        uint256 tokenId
-    ) public view virtual returns (string memory) {
-        // callable only on minted token
-        _requireMinted(tokenId);
-        // the tokenId to be returned (revealed or not)
-        uint256 displayId = tokenId;
-
-        if(_isRevealed) {
-            bytes memory revealedAsBytes = reveal(tokenId);
-            bytes2 tempBytes2;
-            // crop to bytes2
-            assembly {
-                tempBytes2 := mload(add(revealedAsBytes, 0x20))
-            }
-            // explicit conversion to the original size
-            uint16 tempBytes16 = uint16(tempBytes2);
-            // explicit cast to uint256
-            displayId = uint256(tempBytes16);
-        }
-
-        return
-            string.concat(
-                "data:application/json;base64,",
-                Base64.encode(
-                    bytes(
-                        string.concat(
-                            '{"name": "Reveal #',
-                            displayId.toString(),
-                            '",',
-                            '"description": "Reveal is a collection of on-chain NFTs"',
-                            // add whatever you want
-                            "}"
-                        )
-                    )
-                )
-            );
-    }
-
-```
-
+The Reveal contract is a simple contract that allows the owner to reveal an hidden value using the Reveable contract.
 
 ## Pitfalls
 
@@ -380,25 +297,52 @@ The smaller the hidden value is, the cheaper it is to keep it in the smart contr
 ### Hardhat Gas Report
 
 ```text
+
+  Revealable Contract testing
+    ✓ should revert if Unset
+    ✓ should revert if key or iv equal 0
+    ✓ should set the hidden values
+    ✓ should emit event when setting the hidden values
+    ✓ should revert if index out of range
+    ✓ should cipher values
+    ✓ should decipher hidden value if revealed
+    ✓ should cipher and decipher if revealed
+    ✓ should return cipher values as byte
+    ✓ should setHiddenValues with bytes
+
 ·----------------------------------|---------------------------|-------------|-----------------------------·
-|       Solc version: 0.8.19       ·  Optimizer enabled: true  ·  Runs: 200  ·  Block limit: 30000000 gas  │
+|       Solc version: 0.8.18       ·  Optimizer enabled: true  ·  Runs: 200  ·  Block limit: 30000000 gas  │
 ···································|···························|·············|······························
-|  Methods                         ·               5 gwei/gas                ·       1774.45 usd/eth       │
-·············|·····················|·············|·············|·············|···············|··············
-|  Contract  ·  Method             ·  Min        ·  Max        ·  Avg        ·  # calls      ·  usd (avg)  │
-·············|·····················|·············|·············|·············|···············|··············
-|  Reveal    ·  approve            ·          -  ·          -  ·      48786  ·            4  ·       0.43  │
-·············|·····················|·············|·············|·············|···············|··············
-|  Reveal    ·  mint               ·      63027  ·      97227  ·      79367  ·           45  ·       0.70  │
-·············|·····················|·············|·············|·············|···············|··············
-|  Reveal    ·  safeTransferFrom   ·      40832  ·      62956  ·      58943  ·            6  ·       0.52  │
-·············|·····················|·············|·············|·············|···············|··············
-|  Reveal    ·  setApprovalForAll  ·      24376  ·      46288  ·      42636  ·            6  ·       0.38  │
-·············|·····················|·············|·············|·············|···············|··············
+|  Methods                         ·               5 gwei/gas                ·       1837.64 usd/eth       │
+···············|···················|·············|·············|·············|···············|··············
+|  Contract    ·  Method           ·  Min        ·  Max        ·  Avg        ·  # calls      ·  usd (avg)  │
+···············|···················|·············|·············|·············|···············|··············
+|  Revealable  ·  resetReveal      ·          -  ·          -  ·      38956  ·            1  ·       0.36  │
+···············|···················|·············|·············|·············|···············|··············
+|  Revealable  ·  reveal           ·          -  ·          -  ·      41216  ·            7  ·       0.38  │
+···············|···················|·············|·············|·············|···············|··············
+|  Revealable  ·  setHiddenValues  ·          -  ·          -  ·      81026  ·            8  ·       0.74  │
+···············|···················|·············|·············|·············|···············|··············
+|  Revealable  ·  setHiddenValues  ·      32408  ·      52308  ·      45675  ·            3  ·       0.42  │
+···············|···················|·············|·············|·············|···············|··············
+|  Revealable  ·  setRevealKey     ·      35183  ·      77783  ·      72458  ·            8  ·       0.67  │
+···············|···················|·············|·············|·············|···············|··············
 |  Deployments                     ·                                         ·  % of limit   ·             │
 ···································|·············|·············|·············|···············|··············
-|  CipherLib                       ·          -  ·          -  ·     264563  ·        0.9 %  ·       2.35  │
-···································|·············|·············|·············|···············|··············
-|  Reveal                          ·          -  ·          -  ·    1896619  ·        6.3 %  ·      16.83  │
+|  Revealable                      ·          -  ·          -  ·    1185754  ·          4 %  ·      10.89  │
 ·----------------------------------|-------------|-------------|-------------|---------------|-------------·
+
+  10 passing (8s)
+
 ```
+
+## Disclaimer
+
+Before using this code, please read the following disclaimer:
+
+- This is not a production-ready code.
+- It is just a proof of concept.
+- It is not audited and it is not fully tested in a real environment.
+- It is provided as is without any warranty of any kind.
+- I am not responsible for any loss of funds or any other damage caused by the use of this code.
+- Use it at your own risk.
