@@ -42,9 +42,9 @@ But on the other hand, can we really blame him for wanting to make a living from
 ![Contract Creation](docs/usecase_contract_creation.png)
 
 - The owner must prepare his value to hide and cipher it using a key and a intial vector.
-- The owner must write down the ciphered value into the smart contract.
 - The owner must test his smart contract to make sure everything works as expected.
 - The owner must deploy the smart contract.
+- The owner must write down the ciphered value into the smart contract.
 
 ![Contract Interaction](docs/usecase_contract_interaction.png)
 
@@ -81,7 +81,13 @@ But on the other hand, can we really blame him for wanting to make a living from
 
 #### Contract usage after reveal
 
-- once the hidden value is revealed, anyone can call the smart contract and get to know the value.
+- Once the hidden value is revealed, anyone can call the smart contract and get to know the value.
+
+## Reveal Contract: a quick implementation example
+
+For an example of implementation, you can check the `Reveal.sol` contract.
+
+The Reveal contract is a simple contract that allows the owner to reveal an hidden value using the Reveable contract.
 
 ## Install & testing
 
@@ -280,12 +286,6 @@ There are 2 ways for the contract owner to reveal the hidden value (path A and p
 - [`t0`] `setHiddenValue(value_to_hide)`: the value to hide is set and the contract is in the `Hidden` state
 - [`t1`] `reveal(keys, valueSize)`: the value to hide is revealed and the contract is in the `Revealed` state
 
-### Reveal Contract: a quick implementation example
-
-For an example of implementation, you can check the `Reveal.sol` contract.
-
-The Reveal contract is a simple contract that allows the owner to reveal an hidden value using the Reveable contract.
-
 ## Pitfalls
 
 ### Costs
@@ -294,7 +294,7 @@ In this scheme, the owner needs to pay for the gas cost of keeping the hidden va
 Keeping the hidden value in storage will consume more gas because we need to pay for the block space.
 The smaller the hidden value is, the cheaper it is to keep it in the smart contract.
 
-### Hardhat Gas Report
+## Hardhat Gas Report
 
 ```text
 
