@@ -159,41 +159,6 @@ The ciphering data has been written into ./cipher_output_demo:
 
 Then you will have to deploy your contract and call the `setHiddenValue` method to send the generated Ciphered data into the smart contract.
 
-### Cipher task output files
-
-the `cipher` Hardhat task will output a series of files in a folder named `cipher_output_{filename}`.
-
-- `{filename}_ciphered_bytes.txt` will contains your ciphered data as bytes. This is the best way to send the data into the smart contract. It is gaz cheaper to send bytes than to send an array of values.
-- `{filename}_ciphered_array.txt` will contains your ciphered data as an array of integer values.
-- `{filename}.key` will contains the key to use to reveal the ciphered data
-- `{filename}.iv` will contains the initial vector to use to reveal the ciphered data
-- `{filename}_report.json` will contains all the previous data json
-
-#### Example of report file
-
-```json
-{
-    "original_key": "",
-    "original_Iv": "",
-    "key_to_use": "0xcaa6e3191f88601644b74e72893e1b392583b6a04f71511bcc2a8b7280933604",
-    "iv_to_use": "0xe92f5949babb53eb160f01da9321a6e7744a28f4795f38cb5bba1b6b73e1acbe",
-    "ciphered_as_bytes": "0xde0f86d7d95c885fc7b6441c249cbecaade49c45",
-    "ciphered_as_array": [
-        766,
-        10105,
-        58665,
-        13202,
-        65495,
-        53002,
-        10655,
-        64327,
-        31668,
-        28695
-    ],
-    "hidden_value_bytes_size": 2
-}
-```
-
 ### Cipher task command with arguments
 
 ```bash
@@ -254,6 +219,41 @@ An enhancement was made to reduce the space used in the smart contract when the 
 ```
 
 By default, the value to hide will be 2 bytes long.
+
+### Cipher task output files
+
+the `cipher` Hardhat task will output a series of files in a folder named `cipher_output_{filename}`.
+
+- `{filename}_ciphered_bytes.txt` will contains your ciphered data as bytes. This is the best way to send the data into the smart contract. It is gaz cheaper to send bytes than to send an array of values.
+- `{filename}_ciphered_array.txt` will contains your ciphered data as an array of integer values.
+- `{filename}.key` will contains the key to use to reveal the ciphered data
+- `{filename}.iv` will contains the initial vector to use to reveal the ciphered data
+- `{filename}_report.json` will contains all the previous data json
+
+#### Example of report file
+
+```json
+{
+    "original_key": "",
+    "original_Iv": "",
+    "key_to_use": "0xcaa6e3191f88601644b74e72893e1b392583b6a04f71511bcc2a8b7280933604",
+    "iv_to_use": "0xe92f5949babb53eb160f01da9321a6e7744a28f4795f38cb5bba1b6b73e1acbe",
+    "ciphered_as_bytes": "0xde0f86d7d95c885fc7b6441c249cbecaade49c45",
+    "ciphered_as_array": [
+        766,
+        10105,
+        58665,
+        13202,
+        65495,
+        53002,
+        10655,
+        64327,
+        31668,
+        28695
+    ],
+    "hidden_value_bytes_size": 2
+}
+```
 
 ## Implementation details
 
