@@ -1,22 +1,14 @@
 # Revealable
 
-This is a scheme to embed an **hidden value** in a smart contract that could be revealed later by the owner of the contract.
+Revealable is a scheme designed to incorporate a *hidden value* in a smart contract that can be exposed by the contract owner at a later stage.
 
 ## Motivation
 
-The motivation for this scheme is to give the owner of a smart contract the ability to hide a value or an array of values at the time of deployment, and reveal them later.
+The main objective of this scheme is to enable the contract owner to conceal one or more values at the moment of deployment, and later reveal them as required.
 
 ### A concret example: Primes
 
-The initial idea was to hide which [Primes](https://www.primes.wtf/) NFT will be minted by the collector during the drop.
-
-The artist [g56d](https://www.g56d.art/) offers a series of OnChain NFTs that vary in rarity.
-
-He doesn't want the collector to be aware of the differences in the intrinsic qualities of each NFT and thus avoid that some collector buy the best ones first and the others do not want to buy the others anymore.
-
-> Each NFT should have an equal chance of being bought.
-
-In this way, the artist can set a low and unique unit price and leave it to chance to determine who will mint which NFT.
+As a practical example, the idea originated from concealing the NFTs of [Primes](https://www.primes.wtf/) during a drop to ensure that each NFT has an equal chance of being purchased. The artist behind the NFTs, [g56d](https://www.g56d.art/), wished to offer a series of OnChain NFTs of varying rarity without revealing their intrinsic qualities.
 
 ### Randomisation & obfuscation
 
@@ -24,70 +16,66 @@ If the list of NTF's id is published, and even if there is a pseudo-random distr
 
 There are two issues to be dealt with here. On the one hand the collector must not know what he is minting, on the other hand the order in which the NFTs are minted must be random.
 
-The proposal suggests the following approach:
+To achieve randomisation and obfuscation, the proposal suggests the following approach: the creator establishes a variable, such as a DNA, to deduce the qualities of each associated NFT, and creates a randomly ordered array of these variables, which is encrypted and encoded in the contract before or after deployment, before being decrypted when required.
 
-- The creator defines a variable (like ADN) from which he can deduce the qualities of the associated NFT, but it can just as easily be an incremental number sequence
-- He creates a randomly ordered array of these variables
-- He encrypts this array (or each entries) and encodes it in the contract before deployment or sends it to the contract after deployment
-- Then, when the time comes, he decrypts the array
+It could be argued that the creator may reserve the NFTs with more valuable qualities for themselves to maximise their return on investment. However, by using a pseudo-random function, it could be more difficult for the creator to manipulate the system, as the blockchain is deterministic.
 
-It can be argued here that the creator knows the position of the NFTs with more valuable qualities and could reserve them for himself to maximise his return on investment.
-With a pseudo-random function (as the blockchain is a deterministic system), it could be made more difficult for the creator to reserve the most valuable NFTs.
-But on the other hand, can we really blame him for wanting to make a living from his art?
+Nonetheless, it is understandable that an artist wishes to make a living from their work, so it is important to strike a balance between fair distribution and profit-making.
 
-## The scheme overview
+## Overview of the Revealable Scheme
 
-### Uses cases
+Revealable is a scheme that enables smart contract owners to hide a value or an array of values at the time of deployment, and reveal them later. 
+Here's how the process works:
+
+### Use Cases
 
 ![Contract Creation](docs/usecase_contract_creation.png)
 
-- The owner must prepare his value to hide and cipher it using a key and a intial vector.
-- The owner must test his smart contract to make sure everything works as expected.
-- The owner must deploy the smart contract.
-- The owner must write down the ciphered value into the smart contract.
+- The owner prepares the value to hide and encrypts it using a key and an initial vector.
+- The owner tests the smart contract to ensure it works as expected.
+- The owner deploys the smart contract.
+- The owner writes the encrypted value into the smart contract.
 
 ![Contract Interaction](docs/usecase_contract_interaction.png)
 
 - The collector can mint the smart contract.
-- The collector can call the smart contract but get the ciphered value .
+- The collector can call the smart contract but only gets the encrypted value.
 
 ![Reveal Secret](docs/usecase_reveal_secret.png)
 
-- The owner can reveal the hidden value by calling a specific function that will write the key into the smart contract.
-- The collector can call the smart contract and get the revealed value.
+- The owner can reveal the hidden value by calling a specific function that writes the key into the smart contract.
+- The collector can call the smart contract and retrieve the revealed value.
 
-### Preparation & contract testing
+### Preparation and Contract Testing
 
 ![Contract Creation](docs/Contract_creation_SeqDiag.png)
 
-- The owner generates a key and an intial vector.
-- The owner prepares his value to hide and ciphers it using the key and the intial vector.
+- The owner generates a key and an initial vector.
+- The owner encrypts the value to hide using the key and initial vector.
 - The owner deploys the smart contract.
-- The owner writes down the ciphered value into the smart contract.
-- The owner tests his smart contract to make sure everything works as expected.
+- The owner writes the encrypted value into the smart contract.
+- The owner tests the smart contract to ensure everything works as intended.
 
 ### Reveal Sequence
 
 ![Contract interaction](docs/Contract_interaction_SeqDiag.png)
 
-#### Contract usage before reveal
+#### Contract Usage Before Reveal
 
-- Anyone can call the smart contract but get ciphered value.
-- In the diagram above, the collector can mint the smart contract and get the ciphered value when calling the smart contract.
+- Anyone can call the smart contract, but they will only retrieve the encrypted value.
+- In the diagram above, the collector can call the smart contract to mint it, but they will only retrieve the encrypted value.
 
-#### Reveal the hidden value
+#### Reveal the Hidden Value
 
-- The owner reveals the hidden value by calling a specific function that will decrypt the secret using the owner's private key and write the revealed value into the smart contract.
+- The owner can reveal the hidden value by calling a specific function that stores their private key in the contract. 
 
-#### Contract usage after reveal
+#### Contract Usage After Reveal
 
-- Once the hidden value is revealed, anyone can call the smart contract and get to know the value.
+- Once the hidden value is revealed, anyone can call the smart contract to retrieve it.
 
-## Reveal Contract: a quick implementation example
+### Quick Implementation Example: Reveal Contract
 
-For an example of implementation, you can check the `Reveal.sol` contract.
-
-The Reveal contract is a simple contract that allows the owner to reveal an hidden value using the Reveable contract.
+For an example of implementation, refer to the `Reveal.sol` contract. This contract enables the owner to reveal a hidden value using the Revealable scheme.
 
 ## Install & testing
 
@@ -116,11 +104,13 @@ npx hardhat test
 
 - Dive in the code `;)`
 
-## Ciphering the data
+### Cipher Script Usage
+
+Here are the detailed instructions on how to use the Cipher script to cipher data, and the necessary parameters and output files.
 
 ### Using Cipher script
 
-Use the `cipher` hardhat task to cipher your data.
+To use the Cipher script, one should first execute the `cipher` hardhat task to cipher the data. 
 
 ```text
 $ npx hardhat cipher --source demo.json
@@ -157,9 +147,9 @@ The ciphering data has been written into ./cipher_output_demo:
 
 ```
 
-Then you will have to deploy your contract and call the `setHiddenValue` method to send the generated Ciphered data into the smart contract.
+Then, the user must deploy the smart contract and call the `setHiddenValue` method to send the generated Ciphered data into the smart contract.
 
-### Cipher task command with arguments
+The `cipher` task can be executed using the following command with arguments:
 
 ```bash
 npx hardhat cipher --source {path_to_value_to_hide_JSON_file} --key {key} --iv {iv} --valuesize {value}
@@ -167,17 +157,13 @@ npx hardhat cipher --source {path_to_value_to_hide_JSON_file} --key {key} --iv {
 
 #### Source of value(s) to hide
 
-The `--source` parameter is mandatory.
-
-Path is relative to command execution not to the script.
+The `--source` parameter is mandatory and should be the path to the JSON file containing the value to hide. 
 
 ```bash
 --source {path_to_value_to_hide_JSON_file} # path to the JSON file containing the value to hide
 ```
 
-The JSON file containing the value to hide must have a key named `value`.
-
-The value can be a string, a number or an array.
+The JSON file must have a key named `value`, which can be a string, a number, or an array.
 
 ```json
 {
@@ -185,7 +171,7 @@ The value can be a string, a number or an array.
 }
 ```
 
-JSON file can optionally contains `key` and `iv` keys. Those are limited to 32 bytes.
+ If the `key` and `iv` keys are also present in the JSON file, they will be used to cipher the value to hide. If not, they will be generated randomly.
 
 ```json
 {
@@ -195,12 +181,7 @@ JSON file can optionally contains `key` and `iv` keys. Those are limited to 32 b
 }
 ```
 
-If key and iv are provided, they will be used to cipher the value to hide.
-If no key or iv are provided, they will be generated randomly.
-
-#### Optional parameters
-
-##### Key and IV
+If the user wants to provide the `key` and `iv` parameters manually, they can do so using the `--key` and `--iv` arguments. However, the provided key and iv must be limited to 32 bytes.
 
 ```bash
 --key {key} # key to cipher the value to hide
@@ -211,8 +192,7 @@ If no key and iv are provided, they will be generated randomly.
 
 ##### Size of value to hide
 
-In the current implementation, each value have to be the same size. Initially, the value to hide was an array and the `setHiddenValue` method simply pushed the value to hide into an array in the smart contract.
-An enhancement was made to reduce the space used in the smart contract when the value to hide is smaller than 32 bytes. The value to hide is now stored as concatenated bytes. But you still to provide the byte size of the value to hide.
+The `--valuesize` argument is optional and should be used to specify the byte size of the value to hide. If not provided, the value to hide will be 2 bytes long. Note that each value must be the same size in the current implementation.
 
 ```bash
 --valuesize {value} # the size in byte of (each) value to hide
@@ -222,13 +202,12 @@ By default, the value to hide will be 2 bytes long.
 
 ### Cipher task output files
 
-the `cipher` Hardhat task will output a series of files in a folder named `cipher_output_{filename}`.
+After executing the `cipher` task, several files will be generated in a folder named `cipher_output_{filename}`. 
 
-- `{filename}_ciphered_bytes.txt` will contains your ciphered data as bytes. This is the best way to send the data into the smart contract. It is gaz cheaper to send bytes than to send an array of values.
-- `{filename}_ciphered_array.txt` will contains your ciphered data as an array of integer values.
-- `{filename}.key` will contains the key to use to reveal the ciphered data
-- `{filename}.iv` will contains the initial vector to use to reveal the ciphered data
-- `{filename}_report.json` will contains all the previous data json
+- The `{filename}_ciphered_bytes.txt` file will contain the ciphered data as bytes, which is the most efficient way to send the data into the smart contract. 
+- The `{filename}_ciphered_array.txt` file will contain the ciphered data as an array of integer values. 
+- The `{filename}.key` file will contain the key to use to reveal the ciphered data, while the `{filename}.iv` file will contain the initial vector to use to reveal the ciphered data. 
+- The `{filename}_report.json` file will contain all the previous data in JSON format.
 
 #### Example of report file
 
@@ -336,13 +315,18 @@ The smaller the hidden value is, the cheaper it is to keep it in the smart contr
 
 ```
 
-## Disclaimer
+### Caveats
 
-Before using this code, please read the following disclaimer:
+- The security of the scheme relies heavily on the security of the encryption algorithm used. If the encryption algorithm is compromised, an attacker could potentially recover the hidden value without needing the keys.
+- If the keys used to encrypt the hidden value are lost or forgotten, the hidden value will become irretrievable. It is therefore important to keep backup copies of the keys in a secure location.
+- Depending on the specifics of the use case, there may be legal or regulatory requirements governing the storage and handling of sensitive data. It is important to ensure that the use of this scheme complies with any relevant laws or regulations.
 
-- This is not a production-ready code.
-- It is just a proof of concept.
-- It is not audited and it is not fully tested in a real environment.
-- It is provided as is without any warranty of any kind.
-- I am not responsible for any loss of funds or any other damage caused by the use of this code.
-- Use it at your own risk.
+### Disclaimer
+
+Please note the following disclaimer before using the Revealable scheme:
+
+- This code is not intended for production use, but rather serves as a proof of concept.
+- It has not been audited or fully tested in a real environment, and therefore may contain bugs or vulnerabilities.
+- It is provided "as is" without any warranty of any kind.
+- The owner of the contract is solely responsible for any loss of funds or other damages caused by the use of this code.
+- Use this code at your own risk.
