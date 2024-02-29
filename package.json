@@ -11,7 +11,7 @@
   "license": "MIT",
   "devDependencies": {
     "@nomicfoundation/hardhat-toolbox": "^2.0.2",
-    "@openzeppelin/contracts": "^4.9.3",
+    "@openzeppelin/contracts": "^4.9.6",
     "chai-json-equal": "^0.0.1",
     "chalk": "^4.1.2",
     "commander": "^10.0.0",
